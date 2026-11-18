@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="kk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Демо кабинет · MPI практикумы</title>
+<link rel="stylesheet" href="styles.css">
+<script src="demo.js" defer></script>
+</head>
+<body>
+<main class="wrap demo-page">
+<a class="task-link" href="index.html">← Басты бет</a>
+<h1>Демо кабинет</h1>
+<p>Рөлдерді сынап көріңіз. Мұнда тек үлгі деректер қолданылады және өзгерістер осы браузер қойындысында сақталады.</p>
+<section id="demo-login" class="theory">
+<h2>Демо есептік жазбамен кіру</h2>
+<p>Барлық демо есептік жазбаның құпиясөзі — <code>demo123</code>.</p>
+<div class="actions demo-accounts">
+<button type="button" data-demo="admin">Әкімші · admin</button>
+<button type="button" data-demo="teacher">Оқытушы · teacher</button>
+<button type="button" data-demo="student">Студент · student</button>
+</div>
+<form id="demo-login-form" class="runner">
+<label>Логин<input name="login" required autocomplete="off"></label>
+<label>Құпиясөз<input name="password" type="password" required autocomplete="off"></label>
+<div class="actions"><button type="submit">Кіру</button></div>
+</form>
+</section>
+<section id="demo-cabinet" class="theory" hidden>
+<div class="demo-heading"><h2 id="demo-role"></h2><div class="actions"><button type="button" id="demo-logout">Шығу</button></div></div>
+<div id="demo-panel"></div>
+</section>
+<p id="demo-status" role="status" aria-live="polite"></p>
+</main>
+</body>
+</html>
