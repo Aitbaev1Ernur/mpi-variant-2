@@ -94,3 +94,27 @@ pre code,.runner textarea,.runner output{font:.9rem/1.55 ui-monospace,Consolas,m
 .module-pager{display:flex;gap:.6rem;justify-content:space-between;flex-wrap:wrap;margin-top:1.4rem}.module-pager a{padding:.48rem .7rem;border:1px solid var(--edge);border-radius:.65rem;background:#fff;text-decoration:none;font-weight:700}
 .code-index{display:flex;flex-wrap:wrap;gap:.45rem;margin:1rem 0}.code-index a{background:var(--soft);border-radius:.4rem;padding:.3rem .55rem;text-decoration:none;font-size:.85rem;font-weight:700}
 .message{white-space:pre-wrap}
+/* ATU түстері */
+:root{--ink:#112b49;--muted:#435c75;--accent:#07589c;--paper:#f3f8fe;--edge:#d7e6f4;--soft:#e8f3ff;--yellow:#ffd348;--deep-blue:#062c59}
+.sidebar{border-top:4px solid var(--yellow)}
+.brand{display:grid;gap:.52rem;padding:.2rem .2rem .9rem}
+.atu-logo{width:100%;max-width:12.5rem;height:3.55rem;object-fit:cover;object-position:center;display:block;background:#fff;border-radius:.45rem}
+.brand small{color:#526882}
+.mobile-brand{display:none}
+.hero{background:radial-gradient(ellipse at 85% 63%,#0c66af,transparent 63%),var(--deep-blue);border-bottom:4px solid var(--yellow)}
+.hero-description{color:#e0efff}.eyebrow{color:var(--yellow)}
+.hero-button{color:#172e48;background:var(--yellow)}
+.hero-button:hover{background:#ffe681}
+.target-art{position:relative;justify-self:center;width:min(100%,17rem);aspect-ratio:1;display:grid;place-items:center;background:radial-gradient(circle,#d8ecff45 1px,transparent 1px) 0 0 / 17px 17px}
+.target-disc{position:relative;width:73%;aspect-ratio:1;display:block;border-radius:50%;background:radial-gradient(circle,#ffcf43 0 12%,#fff3bb 12% 14%,#082e5b 14% 24%,#d9ebff 24% 25.5%,#135994 25.5% 37%,#cce7ff 37% 38.5%,#0b3d70 38.5% 49%,#e6f2ff 49% 50%);box-shadow:0 0 0 1px #a3d2ff42,0 0 0 13px #9bd2ff10}
+.target-disc::after{content:"";position:absolute;inset:43.5%;border-radius:50%;border:1px solid #092c55;opacity:.6}
+.theory{border-left-color:#e6ad09}.task summary:hover,.module-card:hover{background:#f1f8ff}.module-card:hover{border-color:#8fc0ef}.task-id{color:#07589c}
+.runner{background:#f4f9ff}.runner button[type=submit]:hover,.chat-form button:hover{background:#064c87}
+pre,.runner output,#feedback,.chat-header{background:var(--deep-blue)}
+.chat-header p{color:#deedff}.chat-launch,.message.user{background:#07589c}.chat-log{background:#f5f9ff}.message.bot{background:#e8f3ff}
+.video-section{margin:1.5rem 0 1.8rem}.video-section h2{margin:0 0 .65rem}
+.video-slot{display:grid;place-content:center;justify-items:center;gap:.55rem;min-height:11rem;padding:1.1rem;border:1px solid #b9d4ed;border-radius:.9rem;background:#fff;text-align:center;color:var(--muted)}
+.video-slot p{margin:0}.video-icon{display:grid;place-items:center;width:2.8rem;height:2.8rem;border-radius:50%;background:#fff1bc;color:var(--deep-blue);font-size:1.1rem}
+.video-frame{display:block;width:100%;aspect-ratio:16/9;border:0;border-radius:.85rem;background:var(--deep-blue)}
+@media(max-width:960px){.mobile-brand{display:block;flex:none}.mobile-brand .atu-logo{width:6rem;height:1.9rem}.top-title{margin-right:auto}.sidebar{border-top:0}}
+@media(max-width:620px){.hero{min-height:15rem}.target-art{position:absolute;z-index:-1;width:12rem;right:-3rem;bottom:-2.3rem;opacity:.34}.top-title{display:none}.search-box{width:min(17rem,60vw)}}
