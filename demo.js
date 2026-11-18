@@ -173,7 +173,7 @@ const modules = [
   }
 ];
 const catalog = new Map(modules.flatMap(module => module.tasks.map(task => [task.id, {...task, module:module.id}])));
-const fresh = () => ({role:null, studentActive:true, selected:"3", submissions:{}});
+const fresh = () => ({role:null, studentActive:true, studentName:"", selected:"3", submissions:{}});
 let state = fresh();
 try {
     const saved = JSON.parse(sessionStorage.getItem(key));
@@ -214,7 +214,7 @@ function renderAdmin() {
 function renderTeacher() {
     const entries = Object.entries(state.submissions).filter(([id]) => catalog.has(id));
     panel.innerHTML = '<h3>Студент жіберген кодтар</h3>' +
-        (entries.length ? entries.map(([id,entry]) => '<section class="theory"><h3>'+escape(taskName(id))+'</h3><p><a href="'+taskLink(id)+'">Тапсырма шарты</a></p><pre tabindex="0"><code>'+escape(entry.code)+'</code></pre>'+
+        (entries.length ? entries.map(([id,entry]) => '<section class="theory"><h3>'+escape(taskName(id))+'</h3><p>Студент: <strong>'+escape(entry.studentName || 'Аты-жөні көрсетілмеген')+'</strong></p><p><a href="'+taskLink(id)+'">Тапсырма шарты</a></p><pre tabindex="0"><code>'+escape(entry.code)+'</code></pre>'+
             '<form data-grade="'+id+'" class="runner"><label>Балл (0–100)<input name="score" type="number" min="0" max="100" step="1" required value="'+escape(entry.score ?? '')+'"></label>'+
             '<label>Пікір (міндетті емес)<textarea name="note" maxlength="1000" rows="3">'+escape(entry.note)+'</textarea></label><div class="actions"><button type="submit">Бағаны сақтау</button></div></form></section>').join("") :
             '<p>Әзірге код жіберілген жоқ.</p>');
@@ -232,7 +232,23 @@ function renderTeacher() {
 }
 
 function renderStudent() {
-    panel.innerHTML = '<h3>Код жіберу</h3><label>Тапсырманы таңдаңыз <select id="demo-task">'+modules.map(module =>
+    if (!state.studentName) {
+        panel.innerHTML = '<h3>Студенттің аты-жөні</h3><form id="demo-name-form" class="runner"><label>Аты-жөні<input id="demo-name" name="fullName" maxlength="100" placeholder="Мысалы, Аян Нұрланов" required></label><div class="actions"><button type="submit">Жалғастыру</button></div></form>';
+        const nameForm = document.getElementById("demo-name-form");
+        nameForm.addEventListener("submit", event => {
+            event.preventDefault();
+            const name = String(new FormData(nameForm).get("fullName") || "").trim().replace(/\s+/g," ");
+            if (state.role !== "student") return;
+            if (name.length > 100 || name.split(" ").filter(part => /\p{L}/u.test(part)).length < 2) {
+                status.textContent = "Атыңыз бен тегіңізді жазыңыз."; return;
+            }
+            state.studentName = name;
+            save(); status.textContent = ""; render();
+        });
+        document.getElementById("demo-name").focus();
+        return;
+    }
+    panel.innerHTML = '<p>Студент: <strong>'+escape(state.studentName)+'</strong></p><h3>Код жіберу</h3><label>Тапсырманы таңдаңыз <select id="demo-task">'+modules.map(module =>
         '<optgroup label="'+module.id+'-модуль">'+module.tasks.map(task => '<option value="'+task.id+'">'+escape(taskName(task.id))+'</option>').join("")+'</optgroup>').join("")+
         '</select></label><div id="demo-editor"></div><h3>Мен жіберген жұмыстар</h3><div id="demo-submissions"></div>';
     const select = document.getElementById("demo-task");
@@ -249,9 +265,9 @@ function renderStudent() {
         document.getElementById("demo-submit")?.addEventListener("submit", event => {
             event.preventDefault();
             const code = String(new FormData(event.currentTarget).get("code") || "");
-            if (state.role !== "student" || state.submissions[id]?.score != null) return;
+            if (state.role !== "student" || !state.studentName || state.submissions[id]?.score != null) return;
             if (!code.trim() || code.length > 30000) { status.textContent = "Кодты жазыңыз (ең көбі 30 000 таңба)."; return; }
-            state.submissions[id] = {code,score:null,note:""};
+            state.submissions[id] = {code,studentName:state.studentName,score:null,note:""};
             state.selected = id;
             drafts.delete(id);
             save(); showEditor(); showSubmissions();
