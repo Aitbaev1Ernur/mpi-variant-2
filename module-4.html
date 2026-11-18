@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="kk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="MPI практикумының 2-нұсқасы. MPIBegin жинағындағы 36 тапсырманың шешімі.">
+<title>4-модуль · Ұжымдық операциялар және коммуникаторлар құру</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#course">Негізгі мазмұнға өту</a>
+<div class="platform">
+<aside class="sidebar">
+  <a class="brand" href="index.html"><span class="brand-icon" aria-hidden="true">MPI</span><span>MPI практикумы<small>Оқу платформасы</small></span></a>
+  <nav class="course-nav" aria-label="Оқу модульдері">
+    <span class="nav-label">Оқу бағдарламасы</span>
+    <a href="module-1.html"><span>01</span> Параллель орындау</a>
+    <a href="module-2.html"><span>02</span> Хабарлама алмасу</a>
+    <a href="module-3.html"><span>03</span> Редукция және дерек түрлері</a>
+    <a href="module-4.html"><span>04</span> Ұжымдық операциялар</a>
+    <a href="module-5.html"><span>05</span> Виртуалды топологиялар</a>
+    <a class="nav-code" href="code.html"><span aria-hidden="true">&lt;/&gt;</span> Бастапқы код</a>
+  </nav>
+  <button class="sidebar-help" type="button" data-chat-open><span aria-hidden="true">?</span> MPI көмекшісі</button>
+</aside>
+<div class="workspace">
+<header class="topbar"><div class="wrap topbar-inner">
+  <a href="#course" class="top-title">Параллель бағдарламалау <span>/</span> Практикум</a>
+  <div class="search-box">
+    <label class="sr-only" for="task-search">Тапсырма іздеу</label>
+    <input id="task-search" type="search" placeholder="Тапсырма іздеу" autocomplete="off" aria-controls="search-results" aria-expanded="false">
+    <div id="search-results" class="search-results" hidden></div>
+  </div>
+</div></header>
+<main class="wrap" id="course">
+<div class="page-heading"><a href="index.html">← Барлық модульдер</a></div><section class="module" id="module-4" aria-labelledby="title-4">
+  <div class="module-head"><span class="module-no">4-модуль</span><h2 id="title-4">Ұжымдық операциялар және коммуникаторлар құру</h2><span class="count">11 тапсырма</span></div>
+  <div class="theory" aria-labelledby="theory-4"><h3 id="theory-4">Теория</h3><p>Ұжымдық операцияны берілген коммуникатордың барлық қатысушысы бірдей ретпен шақырады. <code>MPI_Gather</code> деректерді бір процеске жинайды, <code>MPI_Allgather</code> жиналған деректерді барлық қатысушыға береді. <code>MPI_Scatterv</code> деректерді әр рангке бөлек берілген көлем және ығысу бойынша таратады. <code>MPI_Alltoall</code> және <code>MPI_Alltoallv</code> кезінде әр процесс әр қатысушыға дерек жібере алады.</p><p>Жаңа коммуникатор процестердің бір бөлігіне өзара жұмыс істеуге мүмкіндік береді. <code>MPI_Group_excl</code> кейбір рангтерді топтан алып тастайды, ал <code>MPI_Comm_split</code> процестерді белгі бойынша бөледі. Жаңа коммуникатордағы жергілікті ранг <code>MPI_COMM_WORLD</code> ішіндегі рангтен өзгеше болуы мүмкін.</p><p><strong>Мысал.</strong> 1 және 3 рангтері ғана таңдалса, олар жаңа коммуникаторда тиісінше 0 және 1 рангтерін ала алады. Сонда <code>MPI_Gather</code> операциясының жергілікті 0-рангі бастапқы 1-рангке сәйкес келеді.</p></div>
+  <details class="task" id="task-32"><summary><span class="task-id">MPIBegin32</span><span class="task-name">Әр процестен бір сан жинау</span></summary>
+      <div class="task-body">
+        <h3>Тапсырма шарты</h3><p>Әр процесте бір нақты сан бар. MPI_Gather арқылы сандарды 0-рангке жинап, жіберушілер рангінің өсу ретімен шығарыңыз.</p>
+        <h3>Шешімі</h3><p>Жиналған тізім 0-рангтің өз санынан басталады.</p>
+        <form class="runner" data-task="32">
+          <label for="input-32">Рангтер бойынша кіріс деректері</label>
+          <textarea id="input-32" rows="3" spellcheck="false">1.5
+2.5
+3.5</textarea>
+          <div class="actions"><button type="submit">Іске қосу</button><button type="reset">Мысалды қалпына келтіру</button></div>
+          <label for="result-32">Нәтиже</label>
+          <output id="result-32" for="input-32" aria-live="polite">0: 1.5 2.5 3.5</output>
+        </form>
+        <a class="task-link" href="code.html#code-32">Бастапқы кодты көру</a>
+      </div></details>
+<details class="task" id="task-33"><summary><span class="task-id">MPIBegin33</span><span class="task-name">Бес бүтін саннан жинау</span></summary>
+      <div class="task-body">
+        <h3>Тапсырма шарты</h3><p>Әр процесте бес бүтін сан бар. MPI_Gather арқылы тізімдерді 0-рангке жинап, жіберушілер рангінің өсу ретімен шығарыңыз.</p>
+        <h3>Шешімі</h3><p>Жиналған тізімде әр рангке бес қатарлас позиция тиесілі.</p>
+        <form class="runner" data-task="33">
+          <label for="input-33">Рангтер бойынша кіріс деректері</label>
+          <textarea id="input-33" rows="3" spellcheck="false">1 2 3 4 5
+6 7 8 9 10</textarea>
+          <div class="actions"><button type="submit">Іске қосу</button><button type="reset">Мысалды қалпына келтіру</button></div>
+          <label for="result-33">Нәтиже</label>
+          <output id="result-33" for="input-33" aria-live="polite">0: 1 2 3 4 5 6 7 8 9 10</output>
+        </form>
+        <a class="task-link" href="code.html#code-33">Бастапқы кодты көру</a>
+      </div></details>
+<details class="task" id="task-39"><summary><span class="task-id">MPIBegin39</span><span class="task-name">Қабаттасатын үштіктерді тарату</span></summary>
+      <div class="task-body">
+        <h3>Тапсырма шарты</h3><p>0-рангте K + 2 сан бар. MPI_Scatterv арқылы әр r процесіне реттік нөмірлері r + 1, r + 2, r + 3 болатын үш санды жіберіңіз. Әр процесс өз үштігін шығарады.</p>
+        <h3>Шешімі</h3><p>0-ранг қабаттасатын үштіктерді бөлек блоктарға көшіріп, MPI_Scatterv арқылы таратады.</p>
+        <form class="runner" data-task="39">
+          <label for="input-39">Рангтер бойынша кіріс деректері</label>
+          <textarea id="input-39" rows="3" spellcheck="false">10 20 30 40 50
+—
+—</textarea>
+          <div class="actions"><button type="submit">Іске қосу</button><button type="reset">Мысалды қалпына келтіру</button></div>
+          <label for="result-39">Нәтиже</label>
+          <output id="result-39" for="input-39" aria-live="polite">0: 10 20 30
+1: 20 30 40
+2: 30 40 50</output>
+        </form>
+        <a class="task-link" href="code.html#code-39">Бастапқы кодты көру</a>
+      </div></details>
+<details class="task" id="task-41"><summary><span class="task-id">MPIBegin41</span><span class="task-name">Төрттіктерді барлық процеске жинау</span></summary>
+      <div class="task-body">
+        <h3>Тапсырма шарты</h3><p>Әр процесте төрт бүтін сан бар. MPI_Allgather арқылы барлық төрттікті әр процеске жеткізіңіз. Әрқайсысы, өз төрттігін қоса, тізімдерді жіберушілер рангінің өсу ретімен шығарады.</p>
+        <h3>Шешімі</h3><p>MPI_Allgather барлық рангке бірдей нәтиже береді.</p>
+        <form class="runner" data-task="41">
+          <label for="input-41">Рангтер бойынша кіріс деректері</label>
+          <textarea id="input-41" rows="3" spellcheck="false">1 2 3 4
+5 6 7 8</textarea>
+          <div class="actions"><button type="submit">Іске қосу</button><button type="reset">Мысалды қалпына келтіру</button></div>
+          <label for="result-41">Нәтиже</label>
+          <output id="result-41" for="input-41" aria-live="polite">0: 1 2 3 4 5 6 7 8
+1: 1 2 3 4 5 6 7 8</output>
+        </form>
+        <a class="task-link" href="code.html#code-41">Бастапқы кодты көру</a>
+      </div></details>
+<details class="task" id="task-44"><summary><span class="task-id">MPIBegin44</span><span class="task-name">Үш сандық блоктармен алмасу</span></summary>
+      <div class="task-body">
+        <h3>Тапсырма шарты</h3><p>Әр процесте 3K бүтін сан бар. MPI_Alltoall арқылы әр тізімнің алғашқы үш саны 0-рангке, келесі үшеуі 1-рангке және сол ретпен жіберіледі. Әр процесс, өз блогын қоса, алынған блоктарды жіберуші рангі бойынша шығарады.</p>
+        <h3>Шешімі</h3><p>Әр адресатқа тиесілі үш сан MPI_Alltoall арқылы бір блок ретінде жіберіледі.</p>
+        <form class="runner" data-task="44">
+          <label for="input-44">Рангтер бойынша кіріс деректері</label>
+          <textarea id="input-44" rows="3" spellcheck="false">1 2 3 4 5 6
+7 8 9 10 11 12</textarea>
+          <div class="actions"><button type="submit">Іске қосу</button><button type="reset">Мысалды қалпына келтіру</button></div>
+          <label for="result-44">Нәтиже</label>
+          <output id="result-44" for="input-44" aria-live="polite">0: 1 2 3 7 8 9
+1: 4 5 6 10 11 12</output>
+        </form>
+        <a class="task-link" href="code.html#code-44">Бастапқы кодты көру</a>
+      </div></details>
+<details class="task" id="task-46"><summary><span class="task-id">MPIBegin46</span><span class="task-name">Көршілес жұптармен алмасу</span></summary>
+      <div class="task-body">
+        <h3>Тапсырма шарты</h3><p>Әр процесте K + 1 сан бар. MPI_Alltoallv арқылы әр тізімнің алғашқы екі санын 0-рангке, екінші және үшінші санын 1-рангке және сол ретпен таратыңыз. Әр процесс қабылдаған сандарын шығарады.</p>
+        <h3>Шешімі</h3><p>Жұптарды бөлек блоктарға орналастырып, ығысу мәндерін MPI_Alltoallv-ге береміз.</p>
+        <form class="runner" data-task="46">
+          <label for="input-46">Рангтер бойынша кіріс деректері</label>
+          <textarea id="input-46" rows="3" spellcheck="false">1 2 3 4
+5 6 7 8
+9 10 11 12</textarea>
+          <div class="actions"><button type="submit">Іске қосу</button><button type="reset">Мысалды қалпына келтіру</button></div>
+          <label for="result-46">Нәтиже</label>
+          <output id="result-46" for="input-46" aria-live="polite">0: 1 2 5 6 9 10
+1: 2 3 6 7 10 11
+2: 3 4 7 8 11 12</output>
+        </form>
+        <a class="task-link" href="code.html#code-46">Бастапқы кодты көру</a>
+      </div></details>
+<details class="task" id="task-72"><summary><span class="task-id">MPIBegin72</span><span class="task-name">Тақ рангтер арасында алмасу</span></summary>
+      <div class="task-body">
+        <h3>Тапсырма шарты</h3><p>Әр тақ рангі бар процесте екі нақты сан берілген. MPI_Comm_group, MPI_Group_excl және MPI_Comm_create арқылы тек тақ рангтерден жаңа коммуникатор құрыңыз. Бір ұжымдық операция барлық қатысушыға барлық сандарды жеткізсін. Әр қатысушы оларды жіберушілер рангінің өсу ретімен шығарады.</p>
+        <h3>Шешімі</h3><p>Жұп рангтерді топтан шығарып, жаңа коммуникаторда MPI_Allgather орындаймыз.</p>
+        <form class="runner" data-task="72">
+          <label for="input-72">Рангтер бойынша кіріс деректері</label>
+          <textarea id="input-72" rows="4" spellcheck="false">—
+1.5 2.5
+—
+3.5 4.5</textarea>
+          <div class="actions"><button type="submit">Іске қосу</button><button type="reset">Мысалды қалпына келтіру</button></div>
+          <label for="result-72">Нәтиже</label>
+          <output id="result-72" for="input-72" aria-live="polite">1: 1.5 2.5 3.5 4.5
+3: 1.5 2.5 3.5 4.5</output>
+        </form>
+        <a class="task-link" href="code.html#code-72">Бастапқы кодты көру</a>
+      </div></details>
+<details class="task" id="task-74"><summary><span class="task-id">MPIBegin74</span><span class="task-name">Жұп рангтердегі минимумдар</span></summary>
+      <div class="task-body">
+        <h3>Тапсырма шарты</h3><p>Әр жұп рангі бар процесте (0-ді қоса) үш нақты сан бар. Жаңа коммуникатор және бір ұжымдық редукция арқылы әр позициядағы минимумды тауып, 0-рангте шығарыңыз.</p>
+        <h3>Шешімі</h3><p>MPI_Comm_split жұп рангтерді топтастырады. Сол топта MPI_Reduce және MPI_MIN қолданылады.</p>
+        <form class="runner" data-task="74">
+          <label for="input-74">Рангтер бойынша кіріс деректері</label>
+          <textarea id="input-74" rows="4" spellcheck="false">1 8 3
+—
+4 2 1
+—</textarea>
+          <div class="actions"><button type="submit">Іске қосу</button><button type="reset">Мысалды қалпына келтіру</button></div>
+          <label for="result-74">Нәтиже</label>
+          <output id="result-74" for="input-74" aria-live="polite">0: 1 2 1</output>
+        </form>
+        <a class="task-link" href="code.html#code-74">Бастапқы кодты көру</a>
+      </div></details>
+<details class="task" id="task-77"><summary><span class="task-id">MPIBegin77</span><span class="task-name">Таңдалған бірінші процеске жинау</span></summary>
+      <div class="task-body">
+        <h3>Тапсырма шарты</h3><p>Әр процесте N = 0 немесе N = 1 берілген. N = 1 болатын кемінде бір процесс бар және олардың әрқайсысында нақты A саны бар. MPI_Comm_split және бір ұжымдық операция арқылы A сандарын N = 1 болатын ең кіші рангке жинаңыз. Сол процесс барлық A мәнін жіберушілер рангінің өсу ретімен шығарады.</p>
+        <h3>Шешімі</h3><p>Таңдалған коммуникаторда бірінші процестің жергілікті рангі 0 болады. Сол процеске MPI_Gather арқылы жинаймыз.</p>
+        <form class="runner" data-task="77">
+          <label for="input-77">Рангтер бойынша кіріс деректері</label>
+          <textarea id="input-77" rows="4" spellcheck="false">0
+1 2.5
+0
+1 7.5</textarea>
+          <div class="actions"><button type="submit">Іске қосу</button><button type="reset">Мысалды қалпына келтіру</button></div>
+          <label for="result-77">Нәтиже</label>
+          <output id="result-77" for="input-77" aria-live="polite">1: 2.5 7.5</output>
+        </form>
+        <a class="task-link" href="code.html#code-77">Бастапқы кодты көру</a>
+      </div></details>
+<details class="task" id="task-79"><summary><span class="task-id">MPIBegin79</span><span class="task-name">Таңдалған барлық процеске жинау</span></summary>
+      <div class="task-body">
+        <h3>Тапсырма шарты</h3><p>Әр процесте N = 0 немесе N = 1 берілген. Кемінде бір процесте N = 1, ондай әр процесте нақты A саны бар. MPI_Comm_split және бір ұжымдық операция арқылы барлық A мәнін N = 1 процестеріне жеткізіңіз. Олар сандарды жіберушілер рангінің өсу ретімен шығарады.</p>
+        <h3>Шешімі</h3><p>Жаңа коммуникатордағы MPI_Allgather әр қатысушыға толық тізімді береді.</p>
+        <form class="runner" data-task="79">
+          <label for="input-79">Рангтер бойынша кіріс деректері</label>
+          <textarea id="input-79" rows="4" spellcheck="false">0
+1 2.5
+0
+1 7.5</textarea>
+          <div class="actions"><button type="submit">Іске қосу</button><button type="reset">Мысалды қалпына келтіру</button></div>
+          <label for="result-79">Нәтиже</label>
+          <output id="result-79" for="input-79" aria-live="polite">1: 2.5 7.5
+3: 2.5 7.5</output>
+        </form>
+        <a class="task-link" href="code.html#code-79">Бастапқы кодты көру</a>
+      </div></details>
+<details class="task" id="task-81"><summary><span class="task-id">MPIBegin81</span><span class="task-name">Таңдалған процестерде қосындыны табу</span></summary>
+      <div class="task-body">
+        <h3>Тапсырма шарты</h3><p>Әр процесте N = 0 немесе N = 1 берілген. Кемінде бір процесте N = 1, ондай әр процесте нақты A саны бар. MPI_Comm_split және бір ұжымдық редукция арқылы барлық A мәнін қосып, қосындыны N = 1 процестерінің әрқайсысында шығарыңыз.</p>
+        <h3>Шешімі</h3><p>Таңдалған топта MPI_Allreduce және MPI_SUM қолданылады.</p>
+        <form class="runner" data-task="81">
+          <label for="input-81">Рангтер бойынша кіріс деректері</label>
+          <textarea id="input-81" rows="4" spellcheck="false">0
+1 2.5
+0
+1 7.5</textarea>
+          <div class="actions"><button type="submit">Іске қосу</button><button type="reset">Мысалды қалпына келтіру</button></div>
+          <label for="result-81">Нәтиже</label>
+          <output id="result-81" for="input-81" aria-live="polite">1: 10
+3: 10</output>
+        </form>
+        <a class="task-link" href="code.html#code-81">Бастапқы кодты көру</a>
+      </div></details>
+</section><nav class="module-pager" aria-label="Модульдер арасында өту"><a href="module-3.html">← Алдыңғы модуль</a><a href="module-5.html">Келесі модуль →</a></nav>
+</main>
+</div></div>
+<button class="chat-launch" type="button" data-chat-open aria-controls="chat-dialog"><span aria-hidden="true">?</span> Көмекші</button>
+<dialog id="chat-dialog" aria-labelledby="chat-title">
+  <div class="chat-header"><div><h2 id="chat-title">MPI көмекшісі</h2><p>Практикум бойынша сұрақтар</p></div><button type="button" id="chat-close" aria-label="Чатты жабу">×</button></div>
+  <div class="chat-log" id="chat-log" role="log" aria-live="polite"><p class="message bot">Сәлем! MPI туралы немесе тапсырманы қалай орындау керегі жайлы сұраңыз.</p></div>
+  <div class="chat-prompts" aria-label="Дайын сұрақтар"><button type="button">MPI_Gather деген не?</button><button type="button">MPI_Comm_split не істейді?</button><button type="button">MPIBegin39</button></div>
+  <form class="chat-form" id="chat-form"><label class="sr-only" for="chat-input">Сұрағыңыз</label><input id="chat-input" maxlength="200" required placeholder="Сұрағыңызды жазыңыз"><button type="submit">Жіберу</button></form>
+</dialog>
+<div id="feedback" role="status"></div>
+<script src="app.js" defer></script>
+</body>
+</html>

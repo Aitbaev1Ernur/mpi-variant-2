@@ -1,0 +1,2910 @@
+<!doctype html>
+<html lang="kk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="MPI практикумының 2-нұсқасы. MPIBegin жинағындағы 36 тапсырманың шешімі.">
+<title>Бастапқы код · MPI практикумы</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#course">Негізгі мазмұнға өту</a>
+<div class="platform">
+<aside class="sidebar">
+  <a class="brand" href="index.html"><span class="brand-icon" aria-hidden="true">MPI</span><span>MPI практикумы<small>Оқу платформасы</small></span></a>
+  <nav class="course-nav" aria-label="Оқу модульдері">
+    <span class="nav-label">Оқу бағдарламасы</span>
+    <a href="module-1.html"><span>01</span> Параллель орындау</a>
+    <a href="module-2.html"><span>02</span> Хабарлама алмасу</a>
+    <a href="module-3.html"><span>03</span> Редукция және дерек түрлері</a>
+    <a href="module-4.html"><span>04</span> Ұжымдық операциялар</a>
+    <a href="module-5.html"><span>05</span> Виртуалды топологиялар</a>
+    <a class="nav-code" href="code.html"><span aria-hidden="true">&lt;/&gt;</span> Бастапқы код</a>
+  </nav>
+  <button class="sidebar-help" type="button" data-chat-open><span aria-hidden="true">?</span> MPI көмекшісі</button>
+</aside>
+<div class="workspace">
+<header class="topbar"><div class="wrap topbar-inner">
+  <a href="#course" class="top-title">Параллель бағдарламалау <span>/</span> Практикум</a>
+  <div class="search-box">
+    <label class="sr-only" for="task-search">Тапсырма іздеу</label>
+    <input id="task-search" type="search" placeholder="Тапсырма іздеу" autocomplete="off" aria-controls="search-results" aria-expanded="false">
+    <div id="search-results" class="search-results" hidden></div>
+  </div>
+</div></header>
+<main class="wrap" id="course">
+<div class="page-heading"><a href="index.html">← Басты бет</a></div><section class="module" id="code" aria-labelledby="code-title"><h2 id="code-title">Бастапқы код</h2><p>Қажетті тапсырманы ашып, C тіліндегі шешімді және терминалда іске қосу пәрмендерін көріңіз.</p><nav class="code-index" aria-label="Код бөлімдері"><a href="#code-module-1">1-модуль</a><a href="#code-module-2">2-модуль</a><a href="#code-module-3">3-модуль</a><a href="#code-module-4">4-модуль</a><a href="#code-module-5">5-модуль</a></nav><h3 id="code-module-1">1-модуль. Бағдарламаларды параллель режимде орындау</h3>
+<details class="task" id="code-3"><summary><span class="task-id">MPIBegin3</span><span class="task-name">Санды екі еселеу</span></summary><div class="task-body">
+        <div class="code-head"><h3>C тіліндегі код</h3><div class="actions"><button type="button" data-copy="3">Көшіру</button><button type="button" data-download="3">.c файлын жүктеу</button></div></div>
+        <pre class="source" tabindex="0"><code id="source-3">/* Әр MPI рангіне тырнақшаға алынған бір аргумент беріңіз. Кіріс деректері жоқ рангке &quot;&quot; беріңіз. */
+#include &lt;mpi.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+static const char *input;
+
+static void require(int ok) {
+    if (!ok) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+        fprintf(stderr, &quot;%d-ранг. Кіріс деректері немесе процесс саны жарамсыз\n&quot;, rank);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static int integer(void) {
+    char *end;
+    errno = 0;
+    long value = strtol(input, &amp;end, 10);
+    require(end != input &amp;&amp; errno == 0 &amp;&amp; value &gt;= INT_MIN &amp;&amp; value &lt;= INT_MAX);
+    input = end;
+    return (int)value;
+}
+
+static double real(void) {
+    char *end;
+    errno = 0;
+    double value = strtod(input, &amp;end);
+    require(end != input &amp;&amp; errno == 0);
+    input = end;
+    return value;
+}
+
+static void vd(int rank, const double *a, int n) {
+    size_t size = 32 * ((size_t)n + 1);
+    char *line = malloc(size);
+    require(line != NULL);
+    size_t used = (size_t)snprintf(line, size, &quot;%d:&quot;, rank);
+    for (int i = 0; i &lt; n; i++)
+        used += (size_t)snprintf(line + used, size - used, &quot; %.12g&quot;, a[i]);
+    puts(line);
+    free(line);
+}
+
+int main(int argc, char **argv) {
+    int r, k;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;r);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;k);
+    require(argc == k + 1);
+    input = argv[r + 1];
+
+    if (r % 2 == 0) {
+        int a = integer();
+        printf(&quot;%d: %lld\n&quot;, r, 2LL * a);
+    } else {
+        double a = real();
+        a *= 2;
+        vd(r, &amp;a, 1);
+    }
+
+    require(input[strspn(input, &quot; \t\r\n&quot;)] == '\0');
+    MPI_Finalize();
+    return 0;
+}
+</code></pre>
+        <h3>Linux жүйесінде MPI арқылы іске қосу</h3><pre tabindex="0"><code>mpicc -std=c99 MPIBegin3.c -o MPIBegin3
+mpiexec -n 4 ./MPIBegin3 &quot;7&quot; &quot;2.5&quot; &quot;-3&quot; &quot;-1.5&quot;</code></pre>
+        <p><a class="task-link" href="module-1.html#task-3">Тапсырмаға оралу</a></p></div></details>
+<details class="task" id="code-5"><summary><span class="task-id">MPIBegin5</span><span class="task-name">Қосынды және орташа мән</span></summary><div class="task-body">
+        <div class="code-head"><h3>C тіліндегі код</h3><div class="actions"><button type="button" data-copy="5">Көшіру</button><button type="button" data-download="5">.c файлын жүктеу</button></div></div>
+        <pre class="source" tabindex="0"><code id="source-5">/* Әр MPI рангіне тырнақшаға алынған бір аргумент беріңіз. Кіріс деректері жоқ рангке &quot;&quot; беріңіз. */
+#include &lt;mpi.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+static const char *input;
+
+static void require(int ok) {
+    if (!ok) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+        fprintf(stderr, &quot;%d-ранг. Кіріс деректері немесе процесс саны жарамсыз\n&quot;, rank);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static int integer(void) {
+    char *end;
+    errno = 0;
+    long value = strtol(input, &amp;end, 10);
+    require(end != input &amp;&amp; errno == 0 &amp;&amp; value &gt;= INT_MIN &amp;&amp; value &lt;= INT_MAX);
+    input = end;
+    return (int)value;
+}
+
+static double real(void) {
+    char *end;
+    errno = 0;
+    double value = strtod(input, &amp;end);
+    require(end != input &amp;&amp; errno == 0);
+    input = end;
+    return value;
+}
+
+static void vd(int rank, const double *a, int n) {
+    size_t size = 32 * ((size_t)n + 1);
+    char *line = malloc(size);
+    require(line != NULL);
+    size_t used = (size_t)snprintf(line, size, &quot;%d:&quot;, rank);
+    for (int i = 0; i &lt; n; i++)
+        used += (size_t)snprintf(line + used, size - used, &quot; %.12g&quot;, a[i]);
+    puts(line);
+    free(line);
+}
+
+int main(int argc, char **argv) {
+    int r, k;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;r);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;k);
+    require(argc == k + 1);
+    input = argv[r + 1];
+
+    int n = integer();
+    require(n &gt; 0);
+    double sum = 0;
+    for (int i = 0; i &lt; n; i++) sum += real();
+    if (r % 2) sum /= n;
+    vd(r, &amp;sum, 1);
+
+    require(input[strspn(input, &quot; \t\r\n&quot;)] == '\0');
+    MPI_Finalize();
+    return 0;
+}
+</code></pre>
+        <h3>Linux жүйесінде MPI арқылы іске қосу</h3><pre tabindex="0"><code>mpicc -std=c99 MPIBegin5.c -o MPIBegin5
+mpiexec -n 4 ./MPIBegin5 &quot;3 1 2 3&quot; &quot;2 4 8&quot; &quot;1 -2&quot; &quot;3 2 4 9&quot;</code></pre>
+        <p><a class="task-link" href="module-1.html#task-5">Тапсырмаға оралу</a></p></div></details>
+<h3 id="code-module-2">2-модуль. Екі процесс арасында хабарлама жіберу</h3>
+<details class="task" id="code-9"><summary><span class="task-id">MPIBegin9</span><span class="task-name">Әр бағыныңқы процестен төрт сан алу</span></summary><div class="task-body">
+        <div class="code-head"><h3>C тіліндегі код</h3><div class="actions"><button type="button" data-copy="9">Көшіру</button><button type="button" data-download="9">.c файлын жүктеу</button></div></div>
+        <pre class="source" tabindex="0"><code id="source-9">/* Әр MPI рангіне тырнақшаға алынған бір аргумент беріңіз. Кіріс деректері жоқ рангке &quot;&quot; беріңіз. */
+#include &lt;mpi.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+static const char *input;
+
+static void require(int ok) {
+    if (!ok) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+        fprintf(stderr, &quot;%d-ранг. Кіріс деректері немесе процесс саны жарамсыз\n&quot;, rank);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static int integer(void) {
+    char *end;
+    errno = 0;
+    long value = strtol(input, &amp;end, 10);
+    require(end != input &amp;&amp; errno == 0 &amp;&amp; value &gt;= INT_MIN &amp;&amp; value &lt;= INT_MAX);
+    input = end;
+    return (int)value;
+}
+
+static void ri(int *a, int n) {
+    for (int i = 0; i &lt; n; i++) a[i] = integer();
+}
+
+static void vi(int rank, const int *a, int n) {
+    size_t size = 32 * ((size_t)n + 1);
+    char *line = malloc(size);
+    require(line != NULL);
+    size_t used = (size_t)snprintf(line, size, &quot;%d:&quot;, rank);
+    for (int i = 0; i &lt; n; i++)
+        used += (size_t)snprintf(line + used, size - used, &quot; %d&quot;, a[i]);
+    puts(line);
+    free(line);
+}
+
+int main(int argc, char **argv) {
+    int r, k;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;r);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;k);
+    require(argc == k + 1);
+    require(k &gt;= 2);
+    input = argv[r + 1];
+
+    if (r) {
+        int a[4];
+        ri(a, 4);
+        MPI_Send(a, 4, MPI_INT, 0, 0, MPI_COMM_WORLD);
+    } else {
+        int out[4 * (k - 1)];
+        for (int i = 1; i &lt; k; i++)
+            MPI_Recv(out + 4 * (i - 1), 4, MPI_INT, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        vi(r, out, 4 * (k - 1));
+    }
+
+    require(input[strspn(input, &quot; \t\r\n&quot;)] == '\0');
+    MPI_Finalize();
+    return 0;
+}
+</code></pre>
+        <h3>Linux жүйесінде MPI арқылы іске қосу</h3><pre tabindex="0"><code>mpicc -std=c99 MPIBegin9.c -o MPIBegin9
+mpiexec -n 3 ./MPIBegin9 &quot;&quot; &quot;1 2 3 4&quot; &quot;5 6 7 8&quot;</code></pre>
+        <p><a class="task-link" href="module-2.html#task-9">Тапсырмаға оралу</a></p></div></details>
+<details class="task" id="code-13"><summary><span class="task-id">MPIBegin13</span><span class="task-name">Бір-бір саннан тарату және қалдықты беру</span></summary><div class="task-body">
+        <div class="code-head"><h3>C тіліндегі код</h3><div class="actions"><button type="button" data-copy="13">Көшіру</button><button type="button" data-download="13">.c файлын жүктеу</button></div></div>
+        <pre class="source" tabindex="0"><code id="source-13">/* Әр MPI рангіне тырнақшаға алынған бір аргумент беріңіз. Кіріс деректері жоқ рангке &quot;&quot; беріңіз. */
+#include &lt;mpi.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+static const char *input;
+
+static void require(int ok) {
+    if (!ok) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+        fprintf(stderr, &quot;%d-ранг. Кіріс деректері немесе процесс саны жарамсыз\n&quot;, rank);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static int integer(void) {
+    char *end;
+    errno = 0;
+    long value = strtol(input, &amp;end, 10);
+    require(end != input &amp;&amp; errno == 0 &amp;&amp; value &gt;= INT_MIN &amp;&amp; value &lt;= INT_MAX);
+    input = end;
+    return (int)value;
+}
+
+static double real(void) {
+    char *end;
+    errno = 0;
+    double value = strtod(input, &amp;end);
+    require(end != input &amp;&amp; errno == 0);
+    input = end;
+    return value;
+}
+
+static void rd(double *a, int n) {
+    for (int i = 0; i &lt; n; i++) a[i] = real();
+}
+
+static void vd(int rank, const double *a, int n) {
+    size_t size = 32 * ((size_t)n + 1);
+    char *line = malloc(size);
+    require(line != NULL);
+    size_t used = (size_t)snprintf(line, size, &quot;%d:&quot;, rank);
+    for (int i = 0; i &lt; n; i++)
+        used += (size_t)snprintf(line + used, size - used, &quot; %.12g&quot;, a[i]);
+    puts(line);
+    free(line);
+}
+
+int main(int argc, char **argv) {
+    int r, k;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;r);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;k);
+    require(argc == k + 1);
+    require(k &gt;= 2);
+    input = argv[r + 1];
+
+    if (r == 0) {
+        int n = integer();
+        require(n &gt;= k - 1 &amp;&amp; n &lt; 10);
+        double a[9];
+        rd(a, n);
+        for (int dest = 1; dest &lt; k; dest++) {
+            int count = dest == k - 1 ? n - (k - 2) : 1;
+            MPI_Send(a + dest - 1, count, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD);
+        }
+    } else {
+        double a[9];
+        MPI_Status status;
+        int count = 1;
+        MPI_Recv(a, r == k - 1 ? 9 : 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, &amp;status);
+        if (r == k - 1) MPI_Get_count(&amp;status, MPI_DOUBLE, &amp;count);
+        vd(r, a, count);
+    }
+
+    require(input[strspn(input, &quot; \t\r\n&quot;)] == '\0');
+    MPI_Finalize();
+    return 0;
+}
+</code></pre>
+        <h3>Linux жүйесінде MPI арқылы іске қосу</h3><pre tabindex="0"><code>mpicc -std=c99 MPIBegin13.c -o MPIBegin13
+mpiexec -n 4 ./MPIBegin13 &quot;6 1 2 3 4 5 6&quot; &quot;&quot; &quot;&quot; &quot;&quot;</code></pre>
+        <p><a class="task-link" href="module-2.html#task-13">Тапсырмаға оралу</a></p></div></details>
+<details class="task" id="code-15"><summary><span class="task-id">MPIBegin15</span><span class="task-name">Белгісіз жіберушіден қабылдау</span></summary><div class="task-body">
+        <div class="code-head"><h3>C тіліндегі код</h3><div class="actions"><button type="button" data-copy="15">Көшіру</button><button type="button" data-download="15">.c файлын жүктеу</button></div></div>
+        <pre class="source" tabindex="0"><code id="source-15">/* Әр MPI рангіне тырнақшаға алынған бір аргумент беріңіз. Кіріс деректері жоқ рангке &quot;&quot; беріңіз. */
+#include &lt;mpi.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+static const char *input;
+
+static void require(int ok) {
+    if (!ok) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+        fprintf(stderr, &quot;%d-ранг. Кіріс деректері немесе процесс саны жарамсыз\n&quot;, rank);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static int integer(void) {
+    char *end;
+    errno = 0;
+    long value = strtol(input, &amp;end, 10);
+    require(end != input &amp;&amp; errno == 0 &amp;&amp; value &gt;= INT_MIN &amp;&amp; value &lt;= INT_MAX);
+    input = end;
+    return (int)value;
+}
+
+static double real(void) {
+    char *end;
+    errno = 0;
+    double value = strtod(input, &amp;end);
+    require(end != input &amp;&amp; errno == 0);
+    input = end;
+    return value;
+}
+
+static void rd(double *a, int n) {
+    for (int i = 0; i &lt; n; i++) a[i] = real();
+}
+
+static void vd(int rank, const double *a, int n) {
+    size_t size = 32 * ((size_t)n + 1);
+    char *line = malloc(size);
+    require(line != NULL);
+    size_t used = (size_t)snprintf(line, size, &quot;%d:&quot;, rank);
+    for (int i = 0; i &lt; n; i++)
+        used += (size_t)snprintf(line + used, size - used, &quot; %.12g&quot;, a[i]);
+    puts(line);
+    free(line);
+}
+
+int main(int argc, char **argv) {
+    int r, k;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;r);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;k);
+    require(argc == k + 1);
+    require(k &gt;= 2);
+    input = argv[r + 1];
+
+    if (r) {
+        int n = integer();
+        require(n &gt;= 0);
+        if (n &gt; 0) {
+            double a[n];
+            rd(a, n);
+            MPI_Send(a, n, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+        }
+    } else {
+        MPI_Status status;
+        int n;
+        MPI_Probe(MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &amp;status);
+        MPI_Get_count(&amp;status, MPI_DOUBLE, &amp;n);
+        double a[n + 1];
+        MPI_Recv(a, n, MPI_DOUBLE, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &amp;status);
+        a[n] = status.MPI_SOURCE;
+        vd(r, a, n + 1);
+    }
+
+    require(input[strspn(input, &quot; \t\r\n&quot;)] == '\0');
+    MPI_Finalize();
+    return 0;
+}
+</code></pre>
+        <h3>Linux жүйесінде MPI арқылы іске қосу</h3><pre tabindex="0"><code>mpicc -std=c99 MPIBegin15.c -o MPIBegin15
+mpiexec -n 4 ./MPIBegin15 &quot;&quot; &quot;0&quot; &quot;3 1.5 2 8&quot; &quot;0&quot;</code></pre>
+        <p><a class="task-link" href="module-2.html#task-15">Тапсырмаға оралу</a></p></div></details>
+<details class="task" id="code-20"><summary><span class="task-id">MPIBegin20</span><span class="task-name">Сақинадағы екі көршімен алмасу</span></summary><div class="task-body">
+        <div class="code-head"><h3>C тіліндегі код</h3><div class="actions"><button type="button" data-copy="20">Көшіру</button><button type="button" data-download="20">.c файлын жүктеу</button></div></div>
+        <pre class="source" tabindex="0"><code id="source-20">/* Әр MPI рангіне тырнақшаға алынған бір аргумент беріңіз. Кіріс деректері жоқ рангке &quot;&quot; беріңіз. */
+#include &lt;mpi.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+static const char *input;
+
+static void require(int ok) {
+    if (!ok) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+        fprintf(stderr, &quot;%d-ранг. Кіріс деректері немесе процесс саны жарамсыз\n&quot;, rank);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static int integer(void) {
+    char *end;
+    errno = 0;
+    long value = strtol(input, &amp;end, 10);
+    require(end != input &amp;&amp; errno == 0 &amp;&amp; value &gt;= INT_MIN &amp;&amp; value &lt;= INT_MAX);
+    input = end;
+    return (int)value;
+}
+
+static void ri(int *a, int n) {
+    for (int i = 0; i &lt; n; i++) a[i] = integer();
+}
+
+static void vi(int rank, const int *a, int n) {
+    size_t size = 32 * ((size_t)n + 1);
+    char *line = malloc(size);
+    require(line != NULL);
+    size_t used = (size_t)snprintf(line, size, &quot;%d:&quot;, rank);
+    for (int i = 0; i &lt; n; i++)
+        used += (size_t)snprintf(line + used, size - used, &quot; %d&quot;, a[i]);
+    puts(line);
+    free(line);
+}
+
+int main(int argc, char **argv) {
+    int r, k;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;r);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;k);
+    require(argc == k + 1);
+    input = argv[r + 1];
+
+    int a[2], out[2];
+    ri(a, 2);
+    int prev = (r + k - 1) % k, next = (r + 1) % k;
+    if (k == 1) {
+        out[0] = a[1]; out[1] = a[0];
+    }
+    for (int src = 0; k &gt; 1 &amp;&amp; src &lt; k; src++) {
+        if (r == src) {
+            MPI_Send(a, 1, MPI_INT, prev, 0, MPI_COMM_WORLD);
+            MPI_Send(a + 1, 1, MPI_INT, next, 1, MPI_COMM_WORLD);
+        } else {
+            if (src == next) MPI_Recv(out + 1, 1, MPI_INT, src, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            if (src == prev) MPI_Recv(out, 1, MPI_INT, src, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        }
+    }
+    vi(r, out, 2);
+
+    require(input[strspn(input, &quot; \t\r\n&quot;)] == '\0');
+    MPI_Finalize();
+    return 0;
+}
+</code></pre>
+        <h3>Linux жүйесінде MPI арқылы іске қосу</h3><pre tabindex="0"><code>mpicc -std=c99 MPIBegin20.c -o MPIBegin20
+mpiexec -n 4 ./MPIBegin20 &quot;10 11&quot; &quot;20 21&quot; &quot;30 31&quot; &quot;40 41&quot;</code></pre>
+        <p><a class="task-link" href="module-2.html#task-20">Тапсырмаға оралу</a></p></div></details>
+<details class="task" id="code-21"><summary><span class="task-id">MPIBegin21</span><span class="task-name">Рангтерді алмастыру арқылы жіберу</span></summary><div class="task-body">
+        <div class="code-head"><h3>C тіліндегі код</h3><div class="actions"><button type="button" data-copy="21">Көшіру</button><button type="button" data-download="21">.c файлын жүктеу</button></div></div>
+        <pre class="source" tabindex="0"><code id="source-21">/* Әр MPI рангіне тырнақшаға алынған бір аргумент беріңіз. Кіріс деректері жоқ рангке &quot;&quot; беріңіз. */
+#include &lt;mpi.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+static const char *input;
+
+static void require(int ok) {
+    if (!ok) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+        fprintf(stderr, &quot;%d-ранг. Кіріс деректері немесе процесс саны жарамсыз\n&quot;, rank);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static int integer(void) {
+    char *end;
+    errno = 0;
+    long value = strtol(input, &amp;end, 10);
+    require(end != input &amp;&amp; errno == 0 &amp;&amp; value &gt;= INT_MIN &amp;&amp; value &lt;= INT_MAX);
+    input = end;
+    return (int)value;
+}
+
+static double real(void) {
+    char *end;
+    errno = 0;
+    double value = strtod(input, &amp;end);
+    require(end != input &amp;&amp; errno == 0);
+    input = end;
+    return value;
+}
+
+static void vd(int rank, const double *a, int n) {
+    size_t size = 32 * ((size_t)n + 1);
+    char *line = malloc(size);
+    require(line != NULL);
+    size_t used = (size_t)snprintf(line, size, &quot;%d:&quot;, rank);
+    for (int i = 0; i &lt; n; i++)
+        used += (size_t)snprintf(line + used, size - used, &quot; %.12g&quot;, a[i]);
+    puts(line);
+    free(line);
+}
+
+int main(int argc, char **argv) {
+    int r, k;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;r);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;k);
+    require(argc == k + 1);
+    input = argv[r + 1];
+
+    double a = real(), out[2];
+    int dest = integer(), destinations[k];
+    require(dest &gt;= 0 &amp;&amp; dest &lt; k);
+    MPI_Allgather(&amp;dest, 1, MPI_INT, destinations, 1, MPI_INT, MPI_COMM_WORLD);
+    int incoming = 0;
+    for (int src = 0; src &lt; k; src++) incoming += destinations[src] == r;
+    require(incoming == 1);
+
+    for (int src = 0; src &lt; k; src++) {
+        if (src == destinations[src]) {
+            if (r == src) { out[0] = a; out[1] = r; }
+        } else if (r == src) {
+            MPI_Send(&amp;a, 1, MPI_DOUBLE, dest, src, MPI_COMM_WORLD);
+        } else if (r == destinations[src]) {
+            MPI_Status status;
+            MPI_Recv(out, 1, MPI_DOUBLE, MPI_ANY_SOURCE, src, MPI_COMM_WORLD, &amp;status);
+            out[1] = status.MPI_SOURCE;
+        }
+    }
+    vd(r, out, 2);
+
+    require(input[strspn(input, &quot; \t\r\n&quot;)] == '\0');
+    MPI_Finalize();
+    return 0;
+}
+</code></pre>
+        <h3>Linux жүйесінде MPI арқылы іске қосу</h3><pre tabindex="0"><code>mpicc -std=c99 MPIBegin21.c -o MPIBegin21
+mpiexec -n 4 ./MPIBegin21 &quot;1.5 2&quot; &quot;2.5 0&quot; &quot;3.5 1&quot; &quot;4.5 3&quot;</code></pre>
+        <p><a class="task-link" href="module-2.html#task-21">Тапсырмаға оралу</a></p></div></details>
+<details class="task" id="code-25"><summary><span class="task-id">MPIBegin25</span><span class="task-name">Сандарды кері ретпен орналастыру</span></summary><div class="task-body">
+        <div class="code-head"><h3>C тіліндегі код</h3><div class="actions"><button type="button" data-copy="25">Көшіру</button><button type="button" data-download="25">.c файлын жүктеу</button></div></div>
+        <pre class="source" tabindex="0"><code id="source-25">/* Әр MPI рангіне тырнақшаға алынған бір аргумент беріңіз. Кіріс деректері жоқ рангке &quot;&quot; беріңіз. */
+#include &lt;mpi.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+static const char *input;
+
+static void require(int ok) {
+    if (!ok) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+        fprintf(stderr, &quot;%d-ранг. Кіріс деректері немесе процесс саны жарамсыз\n&quot;, rank);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static double real(void) {
+    char *end;
+    errno = 0;
+    double value = strtod(input, &amp;end);
+    require(end != input &amp;&amp; errno == 0);
+    input = end;
+    return value;
+}
+
+static void vd(int rank, const double *a, int n) {
+    size_t size = 32 * ((size_t)n + 1);
+    char *line = malloc(size);
+    require(line != NULL);
+    size_t used = (size_t)snprintf(line, size, &quot;%d:&quot;, rank);
+    for (int i = 0; i &lt; n; i++)
+        used += (size_t)snprintf(line + used, size - used, &quot; %.12g&quot;, a[i]);
+    puts(line);
+    free(line);
+}
+
+int main(int argc, char **argv) {
+    int r, k;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;r);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;k);
+    require(argc == k + 1);
+    input = argv[r + 1];
+
+    double a = real();
+    int peer = k - 1 - r;
+    MPI_Sendrecv_replace(&amp;a, 1, MPI_DOUBLE, peer, 0, peer, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    vd(r, &amp;a, 1);
+
+    require(input[strspn(input, &quot; \t\r\n&quot;)] == '\0');
+    MPI_Finalize();
+    return 0;
+}
+</code></pre>
+        <h3>Linux жүйесінде MPI арқылы іске қосу</h3><pre tabindex="0"><code>mpicc -std=c99 MPIBegin25.c -o MPIBegin25
+mpiexec -n 3 ./MPIBegin25 &quot;1.5&quot; &quot;2.5&quot; &quot;3.5&quot;</code></pre>
+        <p><a class="task-link" href="module-2.html#task-25">Тапсырмаға оралу</a></p></div></details>
+<details class="task" id="code-26"><summary><span class="task-id">MPIBegin26</span><span class="task-name">Тегтегі реттік нөмір</span></summary><div class="task-body">
+        <div class="code-head"><h3>C тіліндегі код</h3><div class="actions"><button type="button" data-copy="26">Көшіру</button><button type="button" data-download="26">.c файлын жүктеу</button></div></div>
+        <pre class="source" tabindex="0"><code id="source-26">/* Әр MPI рангіне тырнақшаға алынған бір аргумент беріңіз. Кіріс деректері жоқ рангке &quot;&quot; беріңіз. */
+#include &lt;mpi.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+static const char *input;
+
+static void require(int ok) {
+    if (!ok) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+        fprintf(stderr, &quot;%d-ранг. Кіріс деректері немесе процесс саны жарамсыз\n&quot;, rank);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static int integer(void) {
+    char *end;
+    errno = 0;
+    long value = strtol(input, &amp;end, 10);
+    require(end != input &amp;&amp; errno == 0 &amp;&amp; value &gt;= INT_MIN &amp;&amp; value &lt;= INT_MAX);
+    input = end;
+    return (int)value;
+}
+
+static double real(void) {
+    char *end;
+    errno = 0;
+    double value = strtod(input, &amp;end);
+    require(end != input &amp;&amp; errno == 0);
+    input = end;
+    return value;
+}
+
+static void vd(int rank, const double *a, int n) {
+    size_t size = 32 * ((size_t)n + 1);
+    char *line = malloc(size);
+    require(line != NULL);
+    size_t used = (size_t)snprintf(line, size, &quot;%d:&quot;, rank);
+    for (int i = 0; i &lt; n; i++)
+        used += (size_t)snprintf(line + used, size - used, &quot; %.12g&quot;, a[i]);
+    puts(line);
+    free(line);
+}
+
+int main(int argc, char **argv) {
+    int r, k;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;r);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;k);
+    require(argc == k + 1);
+    require(k &gt;= 2);
+    input = argv[r + 1];
+
+    if (r) {
+        double a = real();
+        int n = integer();
+        require(n &gt; 0 &amp;&amp; n &lt; k);
+        MPI_Send(&amp;a, 1, MPI_DOUBLE, 0, n, MPI_COMM_WORLD);
+    } else {
+        double out[k - 1];
+        for (int n = 1; n &lt; k; n++)
+            MPI_Recv(out + n - 1, 1, MPI_DOUBLE, MPI_ANY_SOURCE, n, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        vd(r, out, k - 1);
+    }
+
+    require(input[strspn(input, &quot; \t\r\n&quot;)] == '\0');
+    MPI_Finalize();
+    return 0;
+}
+</code></pre>
+        <h3>Linux жүйесінде MPI арқылы іске қосу</h3><pre tabindex="0"><code>mpicc -std=c99 MPIBegin26.c -o MPIBegin26
+mpiexec -n 4 ./MPIBegin26 &quot;&quot; &quot;9.5 3&quot; &quot;4.5 1&quot; &quot;7.5 2&quot;</code></pre>
+        <p><a class="task-link" href="module-2.html#task-26">Тапсырмаға оралу</a></p></div></details>
+<details class="task" id="code-28"><summary><span class="task-id">MPIBegin28</span><span class="task-name">Тегтегі сан түрі</span></summary><div class="task-body">
+        <div class="code-head"><h3>C тіліндегі код</h3><div class="actions"><button type="button" data-copy="28">Көшіру</button><button type="button" data-download="28">.c файлын жүктеу</button></div></div>
+        <pre class="source" tabindex="0"><code id="source-28">/* Әр MPI рангіне тырнақшаға алынған бір аргумент беріңіз. Кіріс деректері жоқ рангке &quot;&quot; беріңіз. */
+#include &lt;mpi.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+static const char *input;
+
+static void require(int ok) {
+    if (!ok) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+        fprintf(stderr, &quot;%d-ранг. Кіріс деректері немесе процесс саны жарамсыз\n&quot;, rank);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static int integer(void) {
+    char *end;
+    errno = 0;
+    long value = strtol(input, &amp;end, 10);
+    require(end != input &amp;&amp; errno == 0 &amp;&amp; value &gt;= INT_MIN &amp;&amp; value &lt;= INT_MAX);
+    input = end;
+    return (int)value;
+}
+
+static double real(void) {
+    char *end;
+    errno = 0;
+    double value = strtod(input, &amp;end);
+    require(end != input &amp;&amp; errno == 0);
+    input = end;
+    return value;
+}
+
+static void vi(int rank, const int *a, int n) {
+    size_t size = 32 * ((size_t)n + 1);
+    char *line = malloc(size);
+    require(line != NULL);
+    size_t used = (size_t)snprintf(line, size, &quot;%d:&quot;, rank);
+    for (int i = 0; i &lt; n; i++)
+        used += (size_t)snprintf(line + used, size - used, &quot; %d&quot;, a[i]);
+    puts(line);
+    free(line);
+}
+
+static void vd(int rank, const double *a, int n) {
+    size_t size = 32 * ((size_t)n + 1);
+    char *line = malloc(size);
+    require(line != NULL);
+    size_t used = (size_t)snprintf(line, size, &quot;%d:&quot;, rank);
+    for (int i = 0; i &lt; n; i++)
+        used += (size_t)snprintf(line + used, size - used, &quot; %.12g&quot;, a[i]);
+    puts(line);
+    free(line);
+}
+
+int main(int argc, char **argv) {
+    int r, k;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;r);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;k);
+    require(argc == k + 1);
+    input = argv[r + 1];
+
+    if (r == 0) {
+        for (int dest = 1; dest &lt; k; dest++) {
+            int type = integer();
+            require(type == 0 || type == 1);
+            if (type == 0) {
+                int a = integer();
+                MPI_Send(&amp;a, 1, MPI_INT, dest, type, MPI_COMM_WORLD);
+            } else {
+                double a = real();
+                MPI_Send(&amp;a, 1, MPI_DOUBLE, dest, type, MPI_COMM_WORLD);
+            }
+        }
+    } else {
+        MPI_Status status;
+        MPI_Probe(0, MPI_ANY_TAG, MPI_COMM_WORLD, &amp;status);
+        if (status.MPI_TAG == 0) {
+            int a;
+            MPI_Recv(&amp;a, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            vi(r, &amp;a, 1);
+        } else {
+            double a;
+            MPI_Recv(&amp;a, 1, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            vd(r, &amp;a, 1);
+        }
+    }
+
+    require(input[strspn(input, &quot; \t\r\n&quot;)] == '\0');
+    MPI_Finalize();
+    return 0;
+}
+</code></pre>
+        <h3>Linux жүйесінде MPI арқылы іске қосу</h3><pre tabindex="0"><code>mpicc -std=c99 MPIBegin28.c -o MPIBegin28
+mpiexec -n 4 ./MPIBegin28 &quot;0 7 1 2.5 0 -3&quot; &quot;&quot; &quot;&quot; &quot;&quot;</code></pre>
+        <p><a class="task-link" href="module-2.html#task-28">Тапсырмаға оралу</a></p></div></details>
+<h3 id="code-module-3">3-модуль. Редукция операциялары және құрама дерек түрлері</h3>
+<details class="task" id="code-49"><summary><span class="task-id">MPIBegin49</span><span class="task-name">Бағандар бойынша минимум</span></summary><div class="task-body">
+        <div class="code-head"><h3>C тіліндегі код</h3><div class="actions"><button type="button" data-copy="49">Көшіру</button><button type="button" data-download="49">.c файлын жүктеу</button></div></div>
+        <pre class="source" tabindex="0"><code id="source-49">/* Әр MPI рангіне тырнақшаға алынған бір аргумент беріңіз. Кіріс деректері жоқ рангке &quot;&quot; беріңіз. */
+#include &lt;mpi.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+static const char *input;
+
+static void require(int ok) {
+    if (!ok) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+        fprintf(stderr, &quot;%d-ранг. Кіріс деректері немесе процесс саны жарамсыз\n&quot;, rank);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static double real(void) {
+    char *end;
+    errno = 0;
+    double value = strtod(input, &amp;end);
+    require(end != input &amp;&amp; errno == 0);
+    input = end;
+    return value;
+}
+
+static void rd(double *a, int n) {
+    for (int i = 0; i &lt; n; i++) a[i] = real();
+}
+
+static void vd(int rank, const double *a, int n) {
+    size_t size = 32 * ((size_t)n + 1);
+    char *line = malloc(size);
+    require(line != NULL);
+    size_t used = (size_t)snprintf(line, size, &quot;%d:&quot;, rank);
+    for (int i = 0; i &lt; n; i++)
+        used += (size_t)snprintf(line + used, size - used, &quot; %.12g&quot;, a[i]);
+    puts(line);
+    free(line);
+}
+
+int main(int argc, char **argv) {
+    int r, k;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;r);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;k);
+    require(argc == k + 1);
+    input = argv[r + 1];
+
+    int n = k + 5;
+    double a[n], out[n];
+    rd(a, n);
+    MPI_Reduce(a, out, n, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
+    if (r == 0) vd(r, out, n);
+
+    require(input[strspn(input, &quot; \t\r\n&quot;)] == '\0');
+    MPI_Finalize();
+    return 0;
+}
+</code></pre>
+        <h3>Linux жүйесінде MPI арқылы іске қосу</h3><pre tabindex="0"><code>mpicc -std=c99 MPIBegin49.c -o MPIBegin49
+mpiexec -n 3 ./MPIBegin49 &quot;4 9 2 8 3 7 0 1&quot; &quot;3 8 5 1 4 6 2 2&quot; &quot;6 7 1 9 0 8 3 3&quot;</code></pre>
+        <p><a class="task-link" href="module-3.html#task-49">Тапсырмаға оралу</a></p></div></details>
+<details class="task" id="code-51"><summary><span class="task-id">MPIBegin51</span><span class="task-name">Бағандар бойынша көбейтінді</span></summary><div class="task-body">
+        <div class="code-head"><h3>C тіліндегі код</h3><div class="actions"><button type="button" data-copy="51">Көшіру</button><button type="button" data-download="51">.c файлын жүктеу</button></div></div>
+        <pre class="source" tabindex="0"><code id="source-51">/* Әр MPI рангіне тырнақшаға алынған бір аргумент беріңіз. Кіріс деректері жоқ рангке &quot;&quot; беріңіз. */
+#include &lt;mpi.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+static const char *input;
+
+static void require(int ok) {
+    if (!ok) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+        fprintf(stderr, &quot;%d-ранг. Кіріс деректері немесе процесс саны жарамсыз\n&quot;, rank);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static double real(void) {
+    char *end;
+    errno = 0;
+    double value = strtod(input, &amp;end);
+    require(end != input &amp;&amp; errno == 0);
+    input = end;
+    return value;
+}
+
+static void rd(double *a, int n) {
+    for (int i = 0; i &lt; n; i++) a[i] = real();
+}
+
+static void vd(int rank, const double *a, int n) {
+    size_t size = 32 * ((size_t)n + 1);
+    char *line = malloc(size);
+    require(line != NULL);
+    size_t used = (size_t)snprintf(line, size, &quot;%d:&quot;, rank);
+    for (int i = 0; i &lt; n; i++)
+        used += (size_t)snprintf(line + used, size - used, &quot; %.12g&quot;, a[i]);
+    puts(line);
+    free(line);
+}
+
+int main(int argc, char **argv) {
+    int r, k;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;r);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;k);
+    require(argc == k + 1);
+    input = argv[r + 1];
+
+    int n = k + 5;
+    double a[n], out[n];
+    rd(a, n);
+    MPI_Allreduce(a, out, n, MPI_DOUBLE, MPI_PROD, MPI_COMM_WORLD);
+    vd(r, out, n);
+
+    require(input[strspn(input, &quot; \t\r\n&quot;)] == '\0');
+    MPI_Finalize();
+    return 0;
+}
+</code></pre>
+        <h3>Linux жүйесінде MPI арқылы іске қосу</h3><pre tabindex="0"><code>mpicc -std=c99 MPIBegin51.c -o MPIBegin51
+mpiexec -n 2 ./MPIBegin51 &quot;2 1 0 3 4 -1 2&quot; &quot;3 2 5 2 1 2 -3&quot;</code></pre>
+        <p><a class="task-link" href="module-3.html#task-51">Тапсырмаға оралу</a></p></div></details>
+<details class="task" id="code-54"><summary><span class="task-id">MPIBegin54</span><span class="task-name">Максимумдарды есептеу және тарату</span></summary><div class="task-body">
+        <div class="code-head"><h3>C тіліндегі код</h3><div class="actions"><button type="button" data-copy="54">Көшіру</button><button type="button" data-download="54">.c файлын жүктеу</button></div></div>
+        <pre class="source" tabindex="0"><code id="source-54">/* Әр MPI рангіне тырнақшаға алынған бір аргумент беріңіз. Кіріс деректері жоқ рангке &quot;&quot; беріңіз. */
+#include &lt;mpi.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+static const char *input;
+
+static void require(int ok) {
+    if (!ok) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+        fprintf(stderr, &quot;%d-ранг. Кіріс деректері немесе процесс саны жарамсыз\n&quot;, rank);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static double real(void) {
+    char *end;
+    errno = 0;
+    double value = strtod(input, &amp;end);
+    require(end != input &amp;&amp; errno == 0);
+    input = end;
+    return value;
+}
+
+static void rd(double *a, int n) {
+    for (int i = 0; i &lt; n; i++) a[i] = real();
+}
+
+static void vd(int rank, const double *a, int n) {
+    size_t size = 32 * ((size_t)n + 1);
+    char *line = malloc(size);
+    require(line != NULL);
+    size_t used = (size_t)snprintf(line, size, &quot;%d:&quot;, rank);
+    for (int i = 0; i &lt; n; i++)
+        used += (size_t)snprintf(line + used, size - used, &quot; %.12g&quot;, a[i]);
+    puts(line);
+    free(line);
+}
+
+int main(int argc, char **argv) {
+    int r, k;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;r);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;k);
+    require(argc == k + 1);
+    input = argv[r + 1];
+
+    double a[2 * k], out[2];
+    int counts[k];
+    rd(a, 2 * k);
+    for (int i = 0; i &lt; k; i++) counts[i] = 2;
+    MPI_Reduce_scatter(a, out, counts, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+    vd(r, out, 2);
+
+    require(input[strspn(input, &quot; \t\r\n&quot;)] == '\0');
+    MPI_Finalize();
+    return 0;
+}
+</code></pre>
+        <h3>Linux жүйесінде MPI арқылы іске қосу</h3><pre tabindex="0"><code>mpicc -std=c99 MPIBegin54.c -o MPIBegin54
+mpiexec -n 3 ./MPIBegin54 &quot;1 9 3 4 5 6&quot; &quot;7 2 8 3 4 8&quot; &quot;2 3 4 9 5 0&quot;</code></pre>
+        <p><a class="task-link" href="module-3.html#task-54">Тапсырмаға оралу</a></p></div></details>
+<details class="task" id="code-57"><summary><span class="task-id">MPIBegin57</span><span class="task-name">Рангке дейінгі максимумдар</span></summary><div class="task-body">
+        <div class="code-head"><h3>C тіліндегі код</h3><div class="actions"><button type="button" data-copy="57">Көшіру</button><button type="button" data-download="57">.c файлын жүктеу</button></div></div>
+        <pre class="source" tabindex="0"><code id="source-57">/* Әр MPI рангіне тырнақшаға алынған бір аргумент беріңіз. Кіріс деректері жоқ рангке &quot;&quot; беріңіз. */
+#include &lt;mpi.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+static const char *input;
+
+static void require(int ok) {
+    if (!ok) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+        fprintf(stderr, &quot;%d-ранг. Кіріс деректері немесе процесс саны жарамсыз\n&quot;, rank);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static int integer(void) {
+    char *end;
+    errno = 0;
+    long value = strtol(input, &amp;end, 10);
+    require(end != input &amp;&amp; errno == 0 &amp;&amp; value &gt;= INT_MIN &amp;&amp; value &lt;= INT_MAX);
+    input = end;
+    return (int)value;
+}
+
+static void ri(int *a, int n) {
+    for (int i = 0; i &lt; n; i++) a[i] = integer();
+}
+
+static void vi(int rank, const int *a, int n) {
+    size_t size = 32 * ((size_t)n + 1);
+    char *line = malloc(size);
+    require(line != NULL);
+    size_t used = (size_t)snprintf(line, size, &quot;%d:&quot;, rank);
+    for (int i = 0; i &lt; n; i++)
+        used += (size_t)snprintf(line + used, size - used, &quot; %d&quot;, a[i]);
+    puts(line);
+    free(line);
+}
+
+int main(int argc, char **argv) {
+    int r, k;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;r);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;k);
+    require(argc == k + 1);
+    input = argv[r + 1];
+
+    int n = k + 5;
+    int a[n], out[n];
+    ri(a, n);
+    MPI_Scan(a, out, n, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+    vi(r, out, n);
+
+    require(input[strspn(input, &quot; \t\r\n&quot;)] == '\0');
+    MPI_Finalize();
+    return 0;
+}
+</code></pre>
+        <h3>Linux жүйесінде MPI арқылы іске қосу</h3><pre tabindex="0"><code>mpicc -std=c99 MPIBegin57.c -o MPIBegin57
+mpiexec -n 3 ./MPIBegin57 &quot;1 9 3 4 5 6 7 8&quot; &quot;7 2 8 3 4 8 1 0&quot; &quot;2 3 4 9 5 0 9 10&quot;</code></pre>
+        <p><a class="task-link" href="module-3.html#task-57">Тапсырмаға оралу</a></p></div></details>
+<details class="task" id="code-58"><summary><span class="task-id">MPIBegin58</span><span class="task-name">Бүтін үштіктерді тарату</span></summary><div class="task-body">
+        <div class="code-head"><h3>C тіліндегі код</h3><div class="actions"><button type="button" data-copy="58">Көшіру</button><button type="button" data-download="58">.c файлын жүктеу</button></div></div>
+        <pre class="source" tabindex="0"><code id="source-58">/* Әр MPI рангіне тырнақшаға алынған бір аргумент беріңіз. Кіріс деректері жоқ рангке &quot;&quot; беріңіз. */
+#include &lt;mpi.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+static const char *input;
+
+static void require(int ok) {
+    if (!ok) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+        fprintf(stderr, &quot;%d-ранг. Кіріс деректері немесе процесс саны жарамсыз\n&quot;, rank);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static int integer(void) {
+    char *end;
+    errno = 0;
+    long value = strtol(input, &amp;end, 10);
+    require(end != input &amp;&amp; errno == 0 &amp;&amp; value &gt;= INT_MIN &amp;&amp; value &lt;= INT_MAX);
+    input = end;
+    return (int)value;
+}
+
+static void ri(int *a, int n) {
+    for (int i = 0; i &lt; n; i++) a[i] = integer();
+}
+
+static void vi(int rank, const int *a, int n) {
+    size_t size = 32 * ((size_t)n + 1);
+    char *line = malloc(size);
+    require(line != NULL);
+    size_t used = (size_t)snprintf(line, size, &quot;%d:&quot;, rank);
+    for (int i = 0; i &lt; n; i++)
+        used += (size_t)snprintf(line + used, size - used, &quot; %d&quot;, a[i]);
+    puts(line);
+    free(line);
+}
+
+int main(int argc, char **argv) {
+    int r, k;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;r);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;k);
+    require(argc == k + 1);
+    require(k &gt;= 2);
+    input = argv[r + 1];
+
+    MPI_Datatype triple;
+    MPI_Type_contiguous(3, MPI_INT, &amp;triple);
+    MPI_Type_commit(&amp;triple);
+    int a[3 * (k - 1)];
+    if (r == 0) ri(a, 3 * (k - 1));
+    MPI_Bcast(a, k - 1, triple, 0, MPI_COMM_WORLD);
+    if (r) vi(r, a, 3 * (k - 1));
+    MPI_Type_free(&amp;triple);
+
+    require(input[strspn(input, &quot; \t\r\n&quot;)] == '\0');
+    MPI_Finalize();
+    return 0;
+}
+</code></pre>
+        <h3>Linux жүйесінде MPI арқылы іске қосу</h3><pre tabindex="0"><code>mpicc -std=c99 MPIBegin58.c -o MPIBegin58
+mpiexec -n 3 ./MPIBegin58 &quot;1 2 3 4 5 6&quot; &quot;&quot; &quot;&quot;</code></pre>
+        <p><a class="task-link" href="module-3.html#task-58">Тапсырмаға оралу</a></p></div></details>
+<details class="task" id="code-63"><summary><span class="task-id">MPIBegin63</span><span class="task-name">Нақты сан мен екі бүтін санды жіберу</span></summary><div class="task-body">
+        <div class="code-head"><h3>C тіліндегі код</h3><div class="actions"><button type="button" data-copy="63">Көшіру</button><button type="button" data-download="63">.c файлын жүктеу</button></div></div>
+        <pre class="source" tabindex="0"><code id="source-63">/* Әр MPI рангіне тырнақшаға алынған бір аргумент беріңіз. Кіріс деректері жоқ рангке &quot;&quot; беріңіз. */
+#include &lt;mpi.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;stddef.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+static const char *input;
+
+static void require(int ok) {
+    if (!ok) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+        fprintf(stderr, &quot;%d-ранг. Кіріс деректері немесе процесс саны жарамсыз\n&quot;, rank);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static int integer(void) {
+    char *end;
+    errno = 0;
+    long value = strtol(input, &amp;end, 10);
+    require(end != input &amp;&amp; errno == 0 &amp;&amp; value &gt;= INT_MIN &amp;&amp; value &lt;= INT_MAX);
+    input = end;
+    return (int)value;
+}
+
+static double real(void) {
+    char *end;
+    errno = 0;
+    double value = strtod(input, &amp;end);
+    require(end != input &amp;&amp; errno == 0);
+    input = end;
+    return value;
+}
+
+static void vd(int rank, const double *a, int n) {
+    size_t size = 32 * ((size_t)n + 1);
+    char *line = malloc(size);
+    require(line != NULL);
+    size_t used = (size_t)snprintf(line, size, &quot;%d:&quot;, rank);
+    for (int i = 0; i &lt; n; i++)
+        used += (size_t)snprintf(line + used, size - used, &quot; %.12g&quot;, a[i]);
+    puts(line);
+    free(line);
+}
+
+typedef struct {
+    int first, second;
+    double value;
+} Triple;
+
+static MPI_Datatype triple_type(void) {
+    int lengths[] = {1, 1, 1};
+    MPI_Aint offsets[] = {offsetof(Triple, first), offsetof(Triple, second),
+                         offsetof(Triple, value)};
+    MPI_Datatype types[] = {MPI_INT, MPI_INT, MPI_DOUBLE};
+    MPI_Datatype original, result;
+    MPI_Type_create_struct(3, lengths, offsets, types, &amp;original);
+    MPI_Type_create_resized(original, 0, sizeof(Triple), &amp;result);
+    MPI_Type_commit(&amp;result);
+    MPI_Type_free(&amp;original);
+    return result;
+}
+
+int main(int argc, char **argv) {
+    int r, k;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;r);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;k);
+    require(argc == k + 1);
+    require(k &gt;= 2);
+    input = argv[r + 1];
+
+    MPI_Datatype type = triple_type();
+    if (r) {
+        Triple a;
+        a.value = real();
+        a.first = integer();
+        a.second = integer();
+        MPI_Send(&amp;a, 1, type, 0, 0, MPI_COMM_WORLD);
+    } else {
+        double out[3 * (k - 1)];
+        for (int src = 1; src &lt; k; src++) {
+            Triple a;
+            MPI_Recv(&amp;a, 1, type, src, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            int i = 3 * (src - 1);
+            out[i] = a.value; out[i + 1] = a.first; out[i + 2] = a.second;
+        }
+        vd(r, out, 3 * (k - 1));
+    }
+    MPI_Type_free(&amp;type);
+
+    require(input[strspn(input, &quot; \t\r\n&quot;)] == '\0');
+    MPI_Finalize();
+    return 0;
+}
+</code></pre>
+        <h3>Linux жүйесінде MPI арқылы іске қосу</h3><pre tabindex="0"><code>mpicc -std=c99 MPIBegin63.c -o MPIBegin63
+mpiexec -n 3 ./MPIBegin63 &quot;&quot; &quot;1.5 2 3&quot; &quot;4.5 5 6&quot;</code></pre>
+        <p><a class="task-link" href="module-3.html#task-63">Тапсырмаға оралу</a></p></div></details>
+<details class="task" id="code-65"><summary><span class="task-id">MPIBegin65</span><span class="task-name">Үштіктер жиынын жіберу</span></summary><div class="task-body">
+        <div class="code-head"><h3>C тіліндегі код</h3><div class="actions"><button type="button" data-copy="65">Көшіру</button><button type="button" data-download="65">.c файлын жүктеу</button></div></div>
+        <pre class="source" tabindex="0"><code id="source-65">/* Әр MPI рангіне тырнақшаға алынған бір аргумент беріңіз. Кіріс деректері жоқ рангке &quot;&quot; беріңіз. */
+#include &lt;mpi.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;stddef.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+static const char *input;
+
+static void require(int ok) {
+    if (!ok) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+        fprintf(stderr, &quot;%d-ранг. Кіріс деректері немесе процесс саны жарамсыз\n&quot;, rank);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static int integer(void) {
+    char *end;
+    errno = 0;
+    long value = strtol(input, &amp;end, 10);
+    require(end != input &amp;&amp; errno == 0 &amp;&amp; value &gt;= INT_MIN &amp;&amp; value &lt;= INT_MAX);
+    input = end;
+    return (int)value;
+}
+
+static double real(void) {
+    char *end;
+    errno = 0;
+    double value = strtod(input, &amp;end);
+    require(end != input &amp;&amp; errno == 0);
+    input = end;
+    return value;
+}
+
+static void vd(int rank, const double *a, int n) {
+    size_t size = 32 * ((size_t)n + 1);
+    char *line = malloc(size);
+    require(line != NULL);
+    size_t used = (size_t)snprintf(line, size, &quot;%d:&quot;, rank);
+    for (int i = 0; i &lt; n; i++)
+        used += (size_t)snprintf(line + used, size - used, &quot; %.12g&quot;, a[i]);
+    puts(line);
+    free(line);
+}
+
+typedef struct {
+    int first, second;
+    double value;
+} Triple;
+
+static MPI_Datatype triple_type(void) {
+    int lengths[] = {1, 1, 1};
+    MPI_Aint offsets[] = {offsetof(Triple, first), offsetof(Triple, second),
+                         offsetof(Triple, value)};
+    MPI_Datatype types[] = {MPI_INT, MPI_INT, MPI_DOUBLE};
+    MPI_Datatype original, result;
+    MPI_Type_create_struct(3, lengths, offsets, types, &amp;original);
+    MPI_Type_create_resized(original, 0, sizeof(Triple), &amp;result);
+    MPI_Type_commit(&amp;result);
+    MPI_Type_free(&amp;original);
+    return result;
+}
+
+int main(int argc, char **argv) {
+    int r, k;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;r);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;k);
+    require(argc == k + 1);
+    require(k &gt;= 2);
+    input = argv[r + 1];
+
+    MPI_Datatype type = triple_type();
+    if (r) {
+        Triple a[r];
+        for (int i = 0; i &lt; r; i++) {
+            a[i].first = integer();
+            a[i].second = integer();
+            a[i].value = real();
+        }
+        MPI_Send(a, r, type, 0, 0, MPI_COMM_WORLD);
+    } else {
+        int count = 3 * ((k - 1) * k / 2);
+        double out[count];
+        int position = 0;
+        for (int src = 1; src &lt; k; src++) {
+            Triple a[src];
+            MPI_Recv(a, src, type, src, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            for (int i = 0; i &lt; src; i++) {
+                out[position++] = a[i].first;
+                out[position++] = a[i].second;
+                out[position++] = a[i].value;
+            }
+        }
+        vd(r, out, count);
+    }
+    MPI_Type_free(&amp;type);
+
+    require(input[strspn(input, &quot; \t\r\n&quot;)] == '\0');
+    MPI_Finalize();
+    return 0;
+}
+</code></pre>
+        <h3>Linux жүйесінде MPI арқылы іске қосу</h3><pre tabindex="0"><code>mpicc -std=c99 MPIBegin65.c -o MPIBegin65
+mpiexec -n 3 ./MPIBegin65 &quot;&quot; &quot;1 2 3.5&quot; &quot;4 5 6.5 7 8 9.5&quot;</code></pre>
+        <p><a class="task-link" href="module-3.html#task-65">Тапсырмаға оралу</a></p></div></details>
+<details class="task" id="code-66"><summary><span class="task-id">MPIBegin66</span><span class="task-name">Екі тізімді буып-түю және тарату</span></summary><div class="task-body">
+        <div class="code-head"><h3>C тіліндегі код</h3><div class="actions"><button type="button" data-copy="66">Көшіру</button><button type="button" data-download="66">.c файлын жүктеу</button></div></div>
+        <pre class="source" tabindex="0"><code id="source-66">/* Әр MPI рангіне тырнақшаға алынған бір аргумент беріңіз. Кіріс деректері жоқ рангке &quot;&quot; беріңіз. */
+#include &lt;mpi.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+static const char *input;
+
+static void require(int ok) {
+    if (!ok) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+        fprintf(stderr, &quot;%d-ранг. Кіріс деректері немесе процесс саны жарамсыз\n&quot;, rank);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static int integer(void) {
+    char *end;
+    errno = 0;
+    long value = strtol(input, &amp;end, 10);
+    require(end != input &amp;&amp; errno == 0 &amp;&amp; value &gt;= INT_MIN &amp;&amp; value &lt;= INT_MAX);
+    input = end;
+    return (int)value;
+}
+
+static double real(void) {
+    char *end;
+    errno = 0;
+    double value = strtod(input, &amp;end);
+    require(end != input &amp;&amp; errno == 0);
+    input = end;
+    return value;
+}
+
+static void ri(int *a, int n) {
+    for (int i = 0; i &lt; n; i++) a[i] = integer();
+}
+
+static void rd(double *a, int n) {
+    for (int i = 0; i &lt; n; i++) a[i] = real();
+}
+
+static void vd(int rank, const double *a, int n) {
+    size_t size = 32 * ((size_t)n + 1);
+    char *line = malloc(size);
+    require(line != NULL);
+    size_t used = (size_t)snprintf(line, size, &quot;%d:&quot;, rank);
+    for (int i = 0; i &lt; n; i++)
+        used += (size_t)snprintf(line + used, size - used, &quot; %.12g&quot;, a[i]);
+    puts(line);
+    free(line);
+}
+
+static int pack_capacity(int integers, int reals) {
+    int a, b;
+    MPI_Pack_size(integers, MPI_INT, MPI_COMM_WORLD, &amp;a);
+    MPI_Pack_size(reals, MPI_DOUBLE, MPI_COMM_WORLD, &amp;b);
+    return a + b;
+}
+
+int main(int argc, char **argv) {
+    int r, k;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;r);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;k);
+    require(argc == k + 1);
+    input = argv[r + 1];
+
+    int a[k], size, position = 0;
+    double b[k];
+    size = pack_capacity(k, k);
+    char packet[size];
+    memset(packet, 0, sizeof(packet));
+    if (r == 0) {
+        ri(a, k);
+        rd(b, k);
+        MPI_Pack(a, k, MPI_INT, packet, size, &amp;position, MPI_COMM_WORLD);
+        MPI_Pack(b, k, MPI_DOUBLE, packet, size, &amp;position, MPI_COMM_WORLD);
+    }
+    MPI_Bcast(packet, size, MPI_PACKED, 0, MPI_COMM_WORLD);
+    if (r) {
+        double out[2 * k];
+        MPI_Unpack(packet, size, &amp;position, a, k, MPI_INT, MPI_COMM_WORLD);
+        MPI_Unpack(packet, size, &amp;position, b, k, MPI_DOUBLE, MPI_COMM_WORLD);
+        for (int i = 0; i &lt; k; i++) { out[i] = a[i]; out[k + i] = b[i]; }
+        vd(r, out, 2 * k);
+    }
+
+    require(input[strspn(input, &quot; \t\r\n&quot;)] == '\0');
+    MPI_Finalize();
+    return 0;
+}
+</code></pre>
+        <h3>Linux жүйесінде MPI арқылы іске қосу</h3><pre tabindex="0"><code>mpicc -std=c99 MPIBegin66.c -o MPIBegin66
+mpiexec -n 3 ./MPIBegin66 &quot;1 2 3 0.5 1.5 2.5&quot; &quot;&quot; &quot;&quot;</code></pre>
+        <p><a class="task-link" href="module-3.html#task-66">Тапсырмаға оралу</a></p></div></details>
+<details class="task" id="code-70"><summary><span class="task-id">MPIBegin70</span><span class="task-name">Әр рангтен бір пакет қабылдау</span></summary><div class="task-body">
+        <div class="code-head"><h3>C тіліндегі код</h3><div class="actions"><button type="button" data-copy="70">Көшіру</button><button type="button" data-download="70">.c файлын жүктеу</button></div></div>
+        <pre class="source" tabindex="0"><code id="source-70">/* Әр MPI рангіне тырнақшаға алынған бір аргумент беріңіз. Кіріс деректері жоқ рангке &quot;&quot; беріңіз. */
+#include &lt;mpi.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+static const char *input;
+
+static void require(int ok) {
+    if (!ok) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+        fprintf(stderr, &quot;%d-ранг. Кіріс деректері немесе процесс саны жарамсыз\n&quot;, rank);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static int integer(void) {
+    char *end;
+    errno = 0;
+    long value = strtol(input, &amp;end, 10);
+    require(end != input &amp;&amp; errno == 0 &amp;&amp; value &gt;= INT_MIN &amp;&amp; value &lt;= INT_MAX);
+    input = end;
+    return (int)value;
+}
+
+static double real(void) {
+    char *end;
+    errno = 0;
+    double value = strtod(input, &amp;end);
+    require(end != input &amp;&amp; errno == 0);
+    input = end;
+    return value;
+}
+
+static void ri(int *a, int n) {
+    for (int i = 0; i &lt; n; i++) a[i] = integer();
+}
+
+static void vd(int rank, const double *a, int n) {
+    size_t size = 32 * ((size_t)n + 1);
+    char *line = malloc(size);
+    require(line != NULL);
+    size_t used = (size_t)snprintf(line, size, &quot;%d:&quot;, rank);
+    for (int i = 0; i &lt; n; i++)
+        used += (size_t)snprintf(line + used, size - used, &quot; %.12g&quot;, a[i]);
+    puts(line);
+    free(line);
+}
+
+static int pack_capacity(int integers, int reals) {
+    int a, b;
+    MPI_Pack_size(integers, MPI_INT, MPI_COMM_WORLD, &amp;a);
+    MPI_Pack_size(reals, MPI_DOUBLE, MPI_COMM_WORLD, &amp;b);
+    return a + b;
+}
+
+int main(int argc, char **argv) {
+    int r, k;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;r);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;k);
+    require(argc == k + 1);
+    require(k &gt;= 2);
+    input = argv[r + 1];
+
+    if (r) {
+        double value = real();
+        int a[r], size = pack_capacity(r, 1), position = 0;
+        char packet[size];
+        ri(a, r);
+        MPI_Pack(&amp;value, 1, MPI_DOUBLE, packet, size, &amp;position, MPI_COMM_WORLD);
+        MPI_Pack(a, r, MPI_INT, packet, size, &amp;position, MPI_COMM_WORLD);
+        MPI_Send(packet, position, MPI_PACKED, 0, 0, MPI_COMM_WORLD);
+    } else {
+        int n = (k - 1) * (k + 2) / 2, offset = 0;
+        double out[n];
+        for (int src = 1; src &lt; k; src++) {
+            int a[src], size = pack_capacity(src, 1), position = 0, received;
+            char packet[size];
+            MPI_Status status;
+            MPI_Recv(packet, size, MPI_PACKED, src, 0, MPI_COMM_WORLD, &amp;status);
+            MPI_Get_count(&amp;status, MPI_PACKED, &amp;received);
+            MPI_Unpack(packet, received, &amp;position, out + offset++, 1, MPI_DOUBLE, MPI_COMM_WORLD);
+            MPI_Unpack(packet, received, &amp;position, a, src, MPI_INT, MPI_COMM_WORLD);
+            for (int i = 0; i &lt; src; i++) out[offset++] = a[i];
+        }
+        vd(r, out, n);
+    }
+
+    require(input[strspn(input, &quot; \t\r\n&quot;)] == '\0');
+    MPI_Finalize();
+    return 0;
+}
+</code></pre>
+        <h3>Linux жүйесінде MPI арқылы іске қосу</h3><pre tabindex="0"><code>mpicc -std=c99 MPIBegin70.c -o MPIBegin70
+mpiexec -n 3 ./MPIBegin70 &quot;&quot; &quot;1.5 7&quot; &quot;2.5 8 9&quot;</code></pre>
+        <p><a class="task-link" href="module-3.html#task-70">Тапсырмаға оралу</a></p></div></details>
+<h3 id="code-module-4">4-модуль. Ұжымдық операциялар және коммуникаторлар құру</h3>
+<details class="task" id="code-32"><summary><span class="task-id">MPIBegin32</span><span class="task-name">Әр процестен бір сан жинау</span></summary><div class="task-body">
+        <div class="code-head"><h3>C тіліндегі код</h3><div class="actions"><button type="button" data-copy="32">Көшіру</button><button type="button" data-download="32">.c файлын жүктеу</button></div></div>
+        <pre class="source" tabindex="0"><code id="source-32">/* Әр MPI рангіне тырнақшаға алынған бір аргумент беріңіз. Кіріс деректері жоқ рангке &quot;&quot; беріңіз. */
+#include &lt;mpi.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+static const char *input;
+
+static void require(int ok) {
+    if (!ok) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+        fprintf(stderr, &quot;%d-ранг. Кіріс деректері немесе процесс саны жарамсыз\n&quot;, rank);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static double real(void) {
+    char *end;
+    errno = 0;
+    double value = strtod(input, &amp;end);
+    require(end != input &amp;&amp; errno == 0);
+    input = end;
+    return value;
+}
+
+static void vd(int rank, const double *a, int n) {
+    size_t size = 32 * ((size_t)n + 1);
+    char *line = malloc(size);
+    require(line != NULL);
+    size_t used = (size_t)snprintf(line, size, &quot;%d:&quot;, rank);
+    for (int i = 0; i &lt; n; i++)
+        used += (size_t)snprintf(line + used, size - used, &quot; %.12g&quot;, a[i]);
+    puts(line);
+    free(line);
+}
+
+int main(int argc, char **argv) {
+    int r, k;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;r);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;k);
+    require(argc == k + 1);
+    input = argv[r + 1];
+
+    double a = real(), out[k];
+    MPI_Gather(&amp;a, 1, MPI_DOUBLE, out, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    if (r == 0) vd(r, out, k);
+
+    require(input[strspn(input, &quot; \t\r\n&quot;)] == '\0');
+    MPI_Finalize();
+    return 0;
+}
+</code></pre>
+        <h3>Linux жүйесінде MPI арқылы іске қосу</h3><pre tabindex="0"><code>mpicc -std=c99 MPIBegin32.c -o MPIBegin32
+mpiexec -n 3 ./MPIBegin32 &quot;1.5&quot; &quot;2.5&quot; &quot;3.5&quot;</code></pre>
+        <p><a class="task-link" href="module-4.html#task-32">Тапсырмаға оралу</a></p></div></details>
+<details class="task" id="code-33"><summary><span class="task-id">MPIBegin33</span><span class="task-name">Бес бүтін саннан жинау</span></summary><div class="task-body">
+        <div class="code-head"><h3>C тіліндегі код</h3><div class="actions"><button type="button" data-copy="33">Көшіру</button><button type="button" data-download="33">.c файлын жүктеу</button></div></div>
+        <pre class="source" tabindex="0"><code id="source-33">/* Әр MPI рангіне тырнақшаға алынған бір аргумент беріңіз. Кіріс деректері жоқ рангке &quot;&quot; беріңіз. */
+#include &lt;mpi.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+static const char *input;
+
+static void require(int ok) {
+    if (!ok) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+        fprintf(stderr, &quot;%d-ранг. Кіріс деректері немесе процесс саны жарамсыз\n&quot;, rank);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static int integer(void) {
+    char *end;
+    errno = 0;
+    long value = strtol(input, &amp;end, 10);
+    require(end != input &amp;&amp; errno == 0 &amp;&amp; value &gt;= INT_MIN &amp;&amp; value &lt;= INT_MAX);
+    input = end;
+    return (int)value;
+}
+
+static void ri(int *a, int n) {
+    for (int i = 0; i &lt; n; i++) a[i] = integer();
+}
+
+static void vi(int rank, const int *a, int n) {
+    size_t size = 32 * ((size_t)n + 1);
+    char *line = malloc(size);
+    require(line != NULL);
+    size_t used = (size_t)snprintf(line, size, &quot;%d:&quot;, rank);
+    for (int i = 0; i &lt; n; i++)
+        used += (size_t)snprintf(line + used, size - used, &quot; %d&quot;, a[i]);
+    puts(line);
+    free(line);
+}
+
+int main(int argc, char **argv) {
+    int r, k;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;r);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;k);
+    require(argc == k + 1);
+    input = argv[r + 1];
+
+    int a[5], out[5 * k];
+    ri(a, 5);
+    MPI_Gather(a, 5, MPI_INT, out, 5, MPI_INT, 0, MPI_COMM_WORLD);
+    if (r == 0) vi(r, out, 5 * k);
+
+    require(input[strspn(input, &quot; \t\r\n&quot;)] == '\0');
+    MPI_Finalize();
+    return 0;
+}
+</code></pre>
+        <h3>Linux жүйесінде MPI арқылы іске қосу</h3><pre tabindex="0"><code>mpicc -std=c99 MPIBegin33.c -o MPIBegin33
+mpiexec -n 2 ./MPIBegin33 &quot;1 2 3 4 5&quot; &quot;6 7 8 9 10&quot;</code></pre>
+        <p><a class="task-link" href="module-4.html#task-33">Тапсырмаға оралу</a></p></div></details>
+<details class="task" id="code-39"><summary><span class="task-id">MPIBegin39</span><span class="task-name">Қабаттасатын үштіктерді тарату</span></summary><div class="task-body">
+        <div class="code-head"><h3>C тіліндегі код</h3><div class="actions"><button type="button" data-copy="39">Көшіру</button><button type="button" data-download="39">.c файлын жүктеу</button></div></div>
+        <pre class="source" tabindex="0"><code id="source-39">/* Әр MPI рангіне тырнақшаға алынған бір аргумент беріңіз. Кіріс деректері жоқ рангке &quot;&quot; беріңіз. */
+#include &lt;mpi.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+static const char *input;
+
+static void require(int ok) {
+    if (!ok) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+        fprintf(stderr, &quot;%d-ранг. Кіріс деректері немесе процесс саны жарамсыз\n&quot;, rank);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static double real(void) {
+    char *end;
+    errno = 0;
+    double value = strtod(input, &amp;end);
+    require(end != input &amp;&amp; errno == 0);
+    input = end;
+    return value;
+}
+
+static void rd(double *a, int n) {
+    for (int i = 0; i &lt; n; i++) a[i] = real();
+}
+
+static void vd(int rank, const double *a, int n) {
+    size_t size = 32 * ((size_t)n + 1);
+    char *line = malloc(size);
+    require(line != NULL);
+    size_t used = (size_t)snprintf(line, size, &quot;%d:&quot;, rank);
+    for (int i = 0; i &lt; n; i++)
+        used += (size_t)snprintf(line + used, size - used, &quot; %.12g&quot;, a[i]);
+    puts(line);
+    free(line);
+}
+
+int main(int argc, char **argv) {
+    int r, k;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;r);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;k);
+    require(argc == k + 1);
+    input = argv[r + 1];
+
+    int counts[k], displacements[k];
+    double blocks[3 * k], out[3];
+    if (r == 0) {
+        double a[k + 2];
+        rd(a, k + 2);
+        for (int dest = 0; dest &lt; k; dest++) {
+            counts[dest] = 3;
+            displacements[dest] = 3 * dest;
+            for (int i = 0; i &lt; 3; i++) blocks[3 * dest + i] = a[dest + i];
+        }
+    }
+    MPI_Scatterv(blocks, counts, displacements, MPI_DOUBLE, out, 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    vd(r, out, 3);
+
+    require(input[strspn(input, &quot; \t\r\n&quot;)] == '\0');
+    MPI_Finalize();
+    return 0;
+}
+</code></pre>
+        <h3>Linux жүйесінде MPI арқылы іске қосу</h3><pre tabindex="0"><code>mpicc -std=c99 MPIBegin39.c -o MPIBegin39
+mpiexec -n 3 ./MPIBegin39 &quot;10 20 30 40 50&quot; &quot;&quot; &quot;&quot;</code></pre>
+        <p><a class="task-link" href="module-4.html#task-39">Тапсырмаға оралу</a></p></div></details>
+<details class="task" id="code-41"><summary><span class="task-id">MPIBegin41</span><span class="task-name">Төрттіктерді барлық процеске жинау</span></summary><div class="task-body">
+        <div class="code-head"><h3>C тіліндегі код</h3><div class="actions"><button type="button" data-copy="41">Көшіру</button><button type="button" data-download="41">.c файлын жүктеу</button></div></div>
+        <pre class="source" tabindex="0"><code id="source-41">/* Әр MPI рангіне тырнақшаға алынған бір аргумент беріңіз. Кіріс деректері жоқ рангке &quot;&quot; беріңіз. */
+#include &lt;mpi.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+static const char *input;
+
+static void require(int ok) {
+    if (!ok) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+        fprintf(stderr, &quot;%d-ранг. Кіріс деректері немесе процесс саны жарамсыз\n&quot;, rank);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static int integer(void) {
+    char *end;
+    errno = 0;
+    long value = strtol(input, &amp;end, 10);
+    require(end != input &amp;&amp; errno == 0 &amp;&amp; value &gt;= INT_MIN &amp;&amp; value &lt;= INT_MAX);
+    input = end;
+    return (int)value;
+}
+
+static void ri(int *a, int n) {
+    for (int i = 0; i &lt; n; i++) a[i] = integer();
+}
+
+static void vi(int rank, const int *a, int n) {
+    size_t size = 32 * ((size_t)n + 1);
+    char *line = malloc(size);
+    require(line != NULL);
+    size_t used = (size_t)snprintf(line, size, &quot;%d:&quot;, rank);
+    for (int i = 0; i &lt; n; i++)
+        used += (size_t)snprintf(line + used, size - used, &quot; %d&quot;, a[i]);
+    puts(line);
+    free(line);
+}
+
+int main(int argc, char **argv) {
+    int r, k;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;r);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;k);
+    require(argc == k + 1);
+    input = argv[r + 1];
+
+    int a[4], out[4 * k];
+    ri(a, 4);
+    MPI_Allgather(a, 4, MPI_INT, out, 4, MPI_INT, MPI_COMM_WORLD);
+    vi(r, out, 4 * k);
+
+    require(input[strspn(input, &quot; \t\r\n&quot;)] == '\0');
+    MPI_Finalize();
+    return 0;
+}
+</code></pre>
+        <h3>Linux жүйесінде MPI арқылы іске қосу</h3><pre tabindex="0"><code>mpicc -std=c99 MPIBegin41.c -o MPIBegin41
+mpiexec -n 2 ./MPIBegin41 &quot;1 2 3 4&quot; &quot;5 6 7 8&quot;</code></pre>
+        <p><a class="task-link" href="module-4.html#task-41">Тапсырмаға оралу</a></p></div></details>
+<details class="task" id="code-44"><summary><span class="task-id">MPIBegin44</span><span class="task-name">Үш сандық блоктармен алмасу</span></summary><div class="task-body">
+        <div class="code-head"><h3>C тіліндегі код</h3><div class="actions"><button type="button" data-copy="44">Көшіру</button><button type="button" data-download="44">.c файлын жүктеу</button></div></div>
+        <pre class="source" tabindex="0"><code id="source-44">/* Әр MPI рангіне тырнақшаға алынған бір аргумент беріңіз. Кіріс деректері жоқ рангке &quot;&quot; беріңіз. */
+#include &lt;mpi.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+static const char *input;
+
+static void require(int ok) {
+    if (!ok) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+        fprintf(stderr, &quot;%d-ранг. Кіріс деректері немесе процесс саны жарамсыз\n&quot;, rank);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static int integer(void) {
+    char *end;
+    errno = 0;
+    long value = strtol(input, &amp;end, 10);
+    require(end != input &amp;&amp; errno == 0 &amp;&amp; value &gt;= INT_MIN &amp;&amp; value &lt;= INT_MAX);
+    input = end;
+    return (int)value;
+}
+
+static void ri(int *a, int n) {
+    for (int i = 0; i &lt; n; i++) a[i] = integer();
+}
+
+static void vi(int rank, const int *a, int n) {
+    size_t size = 32 * ((size_t)n + 1);
+    char *line = malloc(size);
+    require(line != NULL);
+    size_t used = (size_t)snprintf(line, size, &quot;%d:&quot;, rank);
+    for (int i = 0; i &lt; n; i++)
+        used += (size_t)snprintf(line + used, size - used, &quot; %d&quot;, a[i]);
+    puts(line);
+    free(line);
+}
+
+int main(int argc, char **argv) {
+    int r, k;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;r);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;k);
+    require(argc == k + 1);
+    input = argv[r + 1];
+
+    int a[3 * k], out[3 * k];
+    ri(a, 3 * k);
+    MPI_Alltoall(a, 3, MPI_INT, out, 3, MPI_INT, MPI_COMM_WORLD);
+    vi(r, out, 3 * k);
+
+    require(input[strspn(input, &quot; \t\r\n&quot;)] == '\0');
+    MPI_Finalize();
+    return 0;
+}
+</code></pre>
+        <h3>Linux жүйесінде MPI арқылы іске қосу</h3><pre tabindex="0"><code>mpicc -std=c99 MPIBegin44.c -o MPIBegin44
+mpiexec -n 2 ./MPIBegin44 &quot;1 2 3 4 5 6&quot; &quot;7 8 9 10 11 12&quot;</code></pre>
+        <p><a class="task-link" href="module-4.html#task-44">Тапсырмаға оралу</a></p></div></details>
+<details class="task" id="code-46"><summary><span class="task-id">MPIBegin46</span><span class="task-name">Көршілес жұптармен алмасу</span></summary><div class="task-body">
+        <div class="code-head"><h3>C тіліндегі код</h3><div class="actions"><button type="button" data-copy="46">Көшіру</button><button type="button" data-download="46">.c файлын жүктеу</button></div></div>
+        <pre class="source" tabindex="0"><code id="source-46">/* Әр MPI рангіне тырнақшаға алынған бір аргумент беріңіз. Кіріс деректері жоқ рангке &quot;&quot; беріңіз. */
+#include &lt;mpi.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+static const char *input;
+
+static void require(int ok) {
+    if (!ok) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+        fprintf(stderr, &quot;%d-ранг. Кіріс деректері немесе процесс саны жарамсыз\n&quot;, rank);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static double real(void) {
+    char *end;
+    errno = 0;
+    double value = strtod(input, &amp;end);
+    require(end != input &amp;&amp; errno == 0);
+    input = end;
+    return value;
+}
+
+static void rd(double *a, int n) {
+    for (int i = 0; i &lt; n; i++) a[i] = real();
+}
+
+static void vd(int rank, const double *a, int n) {
+    size_t size = 32 * ((size_t)n + 1);
+    char *line = malloc(size);
+    require(line != NULL);
+    size_t used = (size_t)snprintf(line, size, &quot;%d:&quot;, rank);
+    for (int i = 0; i &lt; n; i++)
+        used += (size_t)snprintf(line + used, size - used, &quot; %.12g&quot;, a[i]);
+    puts(line);
+    free(line);
+}
+
+int main(int argc, char **argv) {
+    int r, k;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;r);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;k);
+    require(argc == k + 1);
+    input = argv[r + 1];
+
+    double a[k + 1], blocks[2 * k], out[2 * k];
+    int counts[k], displacements[k];
+    rd(a, k + 1);
+    for (int dest = 0; dest &lt; k; dest++) {
+        counts[dest] = 2;
+        displacements[dest] = 2 * dest;
+        blocks[2 * dest] = a[dest];
+        blocks[2 * dest + 1] = a[dest + 1];
+    }
+    MPI_Alltoallv(blocks, counts, displacements, MPI_DOUBLE,
+                  out, counts, displacements, MPI_DOUBLE, MPI_COMM_WORLD);
+    vd(r, out, 2 * k);
+
+    require(input[strspn(input, &quot; \t\r\n&quot;)] == '\0');
+    MPI_Finalize();
+    return 0;
+}
+</code></pre>
+        <h3>Linux жүйесінде MPI арқылы іске қосу</h3><pre tabindex="0"><code>mpicc -std=c99 MPIBegin46.c -o MPIBegin46
+mpiexec -n 3 ./MPIBegin46 &quot;1 2 3 4&quot; &quot;5 6 7 8&quot; &quot;9 10 11 12&quot;</code></pre>
+        <p><a class="task-link" href="module-4.html#task-46">Тапсырмаға оралу</a></p></div></details>
+<details class="task" id="code-72"><summary><span class="task-id">MPIBegin72</span><span class="task-name">Тақ рангтер арасында алмасу</span></summary><div class="task-body">
+        <div class="code-head"><h3>C тіліндегі код</h3><div class="actions"><button type="button" data-copy="72">Көшіру</button><button type="button" data-download="72">.c файлын жүктеу</button></div></div>
+        <pre class="source" tabindex="0"><code id="source-72">/* Әр MPI рангіне тырнақшаға алынған бір аргумент беріңіз. Кіріс деректері жоқ рангке &quot;&quot; беріңіз. */
+#include &lt;mpi.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+static const char *input;
+
+static void require(int ok) {
+    if (!ok) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+        fprintf(stderr, &quot;%d-ранг. Кіріс деректері немесе процесс саны жарамсыз\n&quot;, rank);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static double real(void) {
+    char *end;
+    errno = 0;
+    double value = strtod(input, &amp;end);
+    require(end != input &amp;&amp; errno == 0);
+    input = end;
+    return value;
+}
+
+static void rd(double *a, int n) {
+    for (int i = 0; i &lt; n; i++) a[i] = real();
+}
+
+static void vd(int rank, const double *a, int n) {
+    size_t size = 32 * ((size_t)n + 1);
+    char *line = malloc(size);
+    require(line != NULL);
+    size_t used = (size_t)snprintf(line, size, &quot;%d:&quot;, rank);
+    for (int i = 0; i &lt; n; i++)
+        used += (size_t)snprintf(line + used, size - used, &quot; %.12g&quot;, a[i]);
+    puts(line);
+    free(line);
+}
+
+int main(int argc, char **argv) {
+    int r, k;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;r);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;k);
+    require(argc == k + 1);
+    input = argv[r + 1];
+
+    MPI_Group world, odd;
+    MPI_Comm comm;
+    int excluded[(k + 1) / 2];
+    for (int i = 0; i &lt; (k + 1) / 2; i++) excluded[i] = 2 * i;
+    MPI_Comm_group(MPI_COMM_WORLD, &amp;world);
+    MPI_Group_excl(world, (k + 1) / 2, excluded, &amp;odd);
+    MPI_Comm_create(MPI_COMM_WORLD, odd, &amp;comm);
+    if (comm != MPI_COMM_NULL) {
+        double a[2], out[2 * (k / 2)];
+        rd(a, 2);
+        MPI_Allgather(a, 2, MPI_DOUBLE, out, 2, MPI_DOUBLE, comm);
+        vd(r, out, 2 * (k / 2));
+        MPI_Comm_free(&amp;comm);
+    }
+    MPI_Group_free(&amp;odd);
+    MPI_Group_free(&amp;world);
+
+    require(input[strspn(input, &quot; \t\r\n&quot;)] == '\0');
+    MPI_Finalize();
+    return 0;
+}
+</code></pre>
+        <h3>Linux жүйесінде MPI арқылы іске қосу</h3><pre tabindex="0"><code>mpicc -std=c99 MPIBegin72.c -o MPIBegin72
+mpiexec -n 4 ./MPIBegin72 &quot;&quot; &quot;1.5 2.5&quot; &quot;&quot; &quot;3.5 4.5&quot;</code></pre>
+        <p><a class="task-link" href="module-4.html#task-72">Тапсырмаға оралу</a></p></div></details>
+<details class="task" id="code-74"><summary><span class="task-id">MPIBegin74</span><span class="task-name">Жұп рангтердегі минимумдар</span></summary><div class="task-body">
+        <div class="code-head"><h3>C тіліндегі код</h3><div class="actions"><button type="button" data-copy="74">Көшіру</button><button type="button" data-download="74">.c файлын жүктеу</button></div></div>
+        <pre class="source" tabindex="0"><code id="source-74">/* Әр MPI рангіне тырнақшаға алынған бір аргумент беріңіз. Кіріс деректері жоқ рангке &quot;&quot; беріңіз. */
+#include &lt;mpi.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+static const char *input;
+
+static void require(int ok) {
+    if (!ok) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+        fprintf(stderr, &quot;%d-ранг. Кіріс деректері немесе процесс саны жарамсыз\n&quot;, rank);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static double real(void) {
+    char *end;
+    errno = 0;
+    double value = strtod(input, &amp;end);
+    require(end != input &amp;&amp; errno == 0);
+    input = end;
+    return value;
+}
+
+static void rd(double *a, int n) {
+    for (int i = 0; i &lt; n; i++) a[i] = real();
+}
+
+static void vd(int rank, const double *a, int n) {
+    size_t size = 32 * ((size_t)n + 1);
+    char *line = malloc(size);
+    require(line != NULL);
+    size_t used = (size_t)snprintf(line, size, &quot;%d:&quot;, rank);
+    for (int i = 0; i &lt; n; i++)
+        used += (size_t)snprintf(line + used, size - used, &quot; %.12g&quot;, a[i]);
+    puts(line);
+    free(line);
+}
+
+int main(int argc, char **argv) {
+    int r, k;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;r);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;k);
+    require(argc == k + 1);
+    input = argv[r + 1];
+
+    MPI_Comm comm;
+    MPI_Comm_split(MPI_COMM_WORLD, r % 2 == 0 ? 0 : MPI_UNDEFINED, r, &amp;comm);
+    if (comm != MPI_COMM_NULL) {
+        double a[3], out[3];
+        rd(a, 3);
+        MPI_Reduce(a, out, 3, MPI_DOUBLE, MPI_MIN, 0, comm);
+        if (r == 0) vd(r, out, 3);
+        MPI_Comm_free(&amp;comm);
+    }
+
+    require(input[strspn(input, &quot; \t\r\n&quot;)] == '\0');
+    MPI_Finalize();
+    return 0;
+}
+</code></pre>
+        <h3>Linux жүйесінде MPI арқылы іске қосу</h3><pre tabindex="0"><code>mpicc -std=c99 MPIBegin74.c -o MPIBegin74
+mpiexec -n 4 ./MPIBegin74 &quot;1 8 3&quot; &quot;&quot; &quot;4 2 1&quot; &quot;&quot;</code></pre>
+        <p><a class="task-link" href="module-4.html#task-74">Тапсырмаға оралу</a></p></div></details>
+<details class="task" id="code-77"><summary><span class="task-id">MPIBegin77</span><span class="task-name">Таңдалған бірінші процеске жинау</span></summary><div class="task-body">
+        <div class="code-head"><h3>C тіліндегі код</h3><div class="actions"><button type="button" data-copy="77">Көшіру</button><button type="button" data-download="77">.c файлын жүктеу</button></div></div>
+        <pre class="source" tabindex="0"><code id="source-77">/* Әр MPI рангіне тырнақшаға алынған бір аргумент беріңіз. Кіріс деректері жоқ рангке &quot;&quot; беріңіз. */
+#include &lt;mpi.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+static const char *input;
+
+static void require(int ok) {
+    if (!ok) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+        fprintf(stderr, &quot;%d-ранг. Кіріс деректері немесе процесс саны жарамсыз\n&quot;, rank);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static int integer(void) {
+    char *end;
+    errno = 0;
+    long value = strtol(input, &amp;end, 10);
+    require(end != input &amp;&amp; errno == 0 &amp;&amp; value &gt;= INT_MIN &amp;&amp; value &lt;= INT_MAX);
+    input = end;
+    return (int)value;
+}
+
+static double real(void) {
+    char *end;
+    errno = 0;
+    double value = strtod(input, &amp;end);
+    require(end != input &amp;&amp; errno == 0);
+    input = end;
+    return value;
+}
+
+static void vd(int rank, const double *a, int n) {
+    size_t size = 32 * ((size_t)n + 1);
+    char *line = malloc(size);
+    require(line != NULL);
+    size_t used = (size_t)snprintf(line, size, &quot;%d:&quot;, rank);
+    for (int i = 0; i &lt; n; i++)
+        used += (size_t)snprintf(line + used, size - used, &quot; %.12g&quot;, a[i]);
+    puts(line);
+    free(line);
+}
+
+static MPI_Comm selected(int rank) {
+    int flag = integer();
+    require(flag == 0 || flag == 1);
+    MPI_Comm comm;
+    MPI_Comm_split(MPI_COMM_WORLD, flag ? 1 : MPI_UNDEFINED, rank, &amp;comm);
+    return comm;
+}
+
+int main(int argc, char **argv) {
+    int r, k;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;r);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;k);
+    require(argc == k + 1);
+    input = argv[r + 1];
+
+    MPI_Comm comm = selected(r);
+    if (comm != MPI_COMM_NULL) {
+        int local, size;
+        MPI_Comm_rank(comm, &amp;local);
+        MPI_Comm_size(comm, &amp;size);
+        double a = real(), out[size];
+        MPI_Gather(&amp;a, 1, MPI_DOUBLE, out, 1, MPI_DOUBLE, 0, comm);
+        if (local == 0) vd(r, out, size);
+        MPI_Comm_free(&amp;comm);
+    }
+
+    require(input[strspn(input, &quot; \t\r\n&quot;)] == '\0');
+    MPI_Finalize();
+    return 0;
+}
+</code></pre>
+        <h3>Linux жүйесінде MPI арқылы іске қосу</h3><pre tabindex="0"><code>mpicc -std=c99 MPIBegin77.c -o MPIBegin77
+mpiexec -n 4 ./MPIBegin77 &quot;0&quot; &quot;1 2.5&quot; &quot;0&quot; &quot;1 7.5&quot;</code></pre>
+        <p><a class="task-link" href="module-4.html#task-77">Тапсырмаға оралу</a></p></div></details>
+<details class="task" id="code-79"><summary><span class="task-id">MPIBegin79</span><span class="task-name">Таңдалған барлық процеске жинау</span></summary><div class="task-body">
+        <div class="code-head"><h3>C тіліндегі код</h3><div class="actions"><button type="button" data-copy="79">Көшіру</button><button type="button" data-download="79">.c файлын жүктеу</button></div></div>
+        <pre class="source" tabindex="0"><code id="source-79">/* Әр MPI рангіне тырнақшаға алынған бір аргумент беріңіз. Кіріс деректері жоқ рангке &quot;&quot; беріңіз. */
+#include &lt;mpi.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+static const char *input;
+
+static void require(int ok) {
+    if (!ok) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+        fprintf(stderr, &quot;%d-ранг. Кіріс деректері немесе процесс саны жарамсыз\n&quot;, rank);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static int integer(void) {
+    char *end;
+    errno = 0;
+    long value = strtol(input, &amp;end, 10);
+    require(end != input &amp;&amp; errno == 0 &amp;&amp; value &gt;= INT_MIN &amp;&amp; value &lt;= INT_MAX);
+    input = end;
+    return (int)value;
+}
+
+static double real(void) {
+    char *end;
+    errno = 0;
+    double value = strtod(input, &amp;end);
+    require(end != input &amp;&amp; errno == 0);
+    input = end;
+    return value;
+}
+
+static void vd(int rank, const double *a, int n) {
+    size_t size = 32 * ((size_t)n + 1);
+    char *line = malloc(size);
+    require(line != NULL);
+    size_t used = (size_t)snprintf(line, size, &quot;%d:&quot;, rank);
+    for (int i = 0; i &lt; n; i++)
+        used += (size_t)snprintf(line + used, size - used, &quot; %.12g&quot;, a[i]);
+    puts(line);
+    free(line);
+}
+
+static MPI_Comm selected(int rank) {
+    int flag = integer();
+    require(flag == 0 || flag == 1);
+    MPI_Comm comm;
+    MPI_Comm_split(MPI_COMM_WORLD, flag ? 1 : MPI_UNDEFINED, rank, &amp;comm);
+    return comm;
+}
+
+int main(int argc, char **argv) {
+    int r, k;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;r);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;k);
+    require(argc == k + 1);
+    input = argv[r + 1];
+
+    MPI_Comm comm = selected(r);
+    if (comm != MPI_COMM_NULL) {
+        int size;
+        MPI_Comm_size(comm, &amp;size);
+        double a = real(), out[size];
+        MPI_Allgather(&amp;a, 1, MPI_DOUBLE, out, 1, MPI_DOUBLE, comm);
+        vd(r, out, size);
+        MPI_Comm_free(&amp;comm);
+    }
+
+    require(input[strspn(input, &quot; \t\r\n&quot;)] == '\0');
+    MPI_Finalize();
+    return 0;
+}
+</code></pre>
+        <h3>Linux жүйесінде MPI арқылы іске қосу</h3><pre tabindex="0"><code>mpicc -std=c99 MPIBegin79.c -o MPIBegin79
+mpiexec -n 4 ./MPIBegin79 &quot;0&quot; &quot;1 2.5&quot; &quot;0&quot; &quot;1 7.5&quot;</code></pre>
+        <p><a class="task-link" href="module-4.html#task-79">Тапсырмаға оралу</a></p></div></details>
+<details class="task" id="code-81"><summary><span class="task-id">MPIBegin81</span><span class="task-name">Таңдалған процестерде қосындыны табу</span></summary><div class="task-body">
+        <div class="code-head"><h3>C тіліндегі код</h3><div class="actions"><button type="button" data-copy="81">Көшіру</button><button type="button" data-download="81">.c файлын жүктеу</button></div></div>
+        <pre class="source" tabindex="0"><code id="source-81">/* Әр MPI рангіне тырнақшаға алынған бір аргумент беріңіз. Кіріс деректері жоқ рангке &quot;&quot; беріңіз. */
+#include &lt;mpi.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+static const char *input;
+
+static void require(int ok) {
+    if (!ok) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+        fprintf(stderr, &quot;%d-ранг. Кіріс деректері немесе процесс саны жарамсыз\n&quot;, rank);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static int integer(void) {
+    char *end;
+    errno = 0;
+    long value = strtol(input, &amp;end, 10);
+    require(end != input &amp;&amp; errno == 0 &amp;&amp; value &gt;= INT_MIN &amp;&amp; value &lt;= INT_MAX);
+    input = end;
+    return (int)value;
+}
+
+static double real(void) {
+    char *end;
+    errno = 0;
+    double value = strtod(input, &amp;end);
+    require(end != input &amp;&amp; errno == 0);
+    input = end;
+    return value;
+}
+
+static void vd(int rank, const double *a, int n) {
+    size_t size = 32 * ((size_t)n + 1);
+    char *line = malloc(size);
+    require(line != NULL);
+    size_t used = (size_t)snprintf(line, size, &quot;%d:&quot;, rank);
+    for (int i = 0; i &lt; n; i++)
+        used += (size_t)snprintf(line + used, size - used, &quot; %.12g&quot;, a[i]);
+    puts(line);
+    free(line);
+}
+
+static MPI_Comm selected(int rank) {
+    int flag = integer();
+    require(flag == 0 || flag == 1);
+    MPI_Comm comm;
+    MPI_Comm_split(MPI_COMM_WORLD, flag ? 1 : MPI_UNDEFINED, rank, &amp;comm);
+    return comm;
+}
+
+int main(int argc, char **argv) {
+    int r, k;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;r);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;k);
+    require(argc == k + 1);
+    input = argv[r + 1];
+
+    MPI_Comm comm = selected(r);
+    if (comm != MPI_COMM_NULL) {
+        double a = real(), out;
+        MPI_Allreduce(&amp;a, &amp;out, 1, MPI_DOUBLE, MPI_SUM, comm);
+        vd(r, &amp;out, 1);
+        MPI_Comm_free(&amp;comm);
+    }
+
+    require(input[strspn(input, &quot; \t\r\n&quot;)] == '\0');
+    MPI_Finalize();
+    return 0;
+}
+</code></pre>
+        <h3>Linux жүйесінде MPI арқылы іске қосу</h3><pre tabindex="0"><code>mpicc -std=c99 MPIBegin81.c -o MPIBegin81
+mpiexec -n 4 ./MPIBegin81 &quot;0&quot; &quot;1 2.5&quot; &quot;0&quot; &quot;1 7.5&quot;</code></pre>
+        <p><a class="task-link" href="module-4.html#task-81">Тапсырмаға оралу</a></p></div></details>
+<h3 id="code-module-5">5-модуль. Виртуалды топологияларды пайдалану</h3>
+<details class="task" id="code-83"><summary><span class="task-id">MPIBegin83</span><span class="task-name">Екі өлшемді тордағы координаталар</span></summary><div class="task-body">
+        <div class="code-head"><h3>C тіліндегі код</h3><div class="actions"><button type="button" data-copy="83">Көшіру</button><button type="button" data-download="83">.c файлын жүктеу</button></div></div>
+        <pre class="source" tabindex="0"><code id="source-83">/* Әр MPI рангіне тырнақшаға алынған бір аргумент беріңіз. Кіріс деректері жоқ рангке &quot;&quot; беріңіз. */
+#include &lt;mpi.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+static const char *input;
+
+static void require(int ok) {
+    if (!ok) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+        fprintf(stderr, &quot;%d-ранг. Кіріс деректері немесе процесс саны жарамсыз\n&quot;, rank);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static int integer(void) {
+    char *end;
+    errno = 0;
+    long value = strtol(input, &amp;end, 10);
+    require(end != input &amp;&amp; errno == 0 &amp;&amp; value &gt;= INT_MIN &amp;&amp; value &lt;= INT_MAX);
+    input = end;
+    return (int)value;
+}
+
+static void vi(int rank, const int *a, int n) {
+    size_t size = 32 * ((size_t)n + 1);
+    char *line = malloc(size);
+    require(line != NULL);
+    size_t used = (size_t)snprintf(line, size, &quot;%d:&quot;, rank);
+    for (int i = 0; i &lt; n; i++)
+        used += (size_t)snprintf(line + used, size - used, &quot; %d&quot;, a[i]);
+    puts(line);
+    free(line);
+}
+
+int main(int argc, char **argv) {
+    int r, k;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;r);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;k);
+    require(argc == k + 1);
+    input = argv[r + 1];
+
+    int n;
+    if (r == 0) n = integer();
+    MPI_Bcast(&amp;n, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    require(n &gt; 1 &amp;&amp; k % n == 0);
+    int dims[] = {n, k / n}, periods[] = {0, 0}, coords[2];
+    MPI_Comm grid;
+    MPI_Cart_create(MPI_COMM_WORLD, 2, dims, periods, 0, &amp;grid);
+    MPI_Cart_coords(grid, r, 2, coords);
+    vi(r, coords, 2);
+    MPI_Comm_free(&amp;grid);
+
+    require(input[strspn(input, &quot; \t\r\n&quot;)] == '\0');
+    MPI_Finalize();
+    return 0;
+}
+</code></pre>
+        <h3>Linux жүйесінде MPI арқылы іске қосу</h3><pre tabindex="0"><code>mpicc -std=c99 MPIBegin83.c -o MPIBegin83
+mpiexec -n 4 ./MPIBegin83 &quot;2&quot; &quot;&quot; &quot;&quot; &quot;&quot;</code></pre>
+        <p><a class="task-link" href="module-5.html#task-83">Тапсырмаға оралу</a></p></div></details>
+<details class="task" id="code-86"><summary><span class="task-id">MPIBegin86</span><span class="task-name">Бағандар бойынша тарату</span></summary><div class="task-body">
+        <div class="code-head"><h3>C тіліндегі код</h3><div class="actions"><button type="button" data-copy="86">Көшіру</button><button type="button" data-download="86">.c файлын жүктеу</button></div></div>
+        <pre class="source" tabindex="0"><code id="source-86">/* Әр MPI рангіне тырнақшаға алынған бір аргумент беріңіз. Кіріс деректері жоқ рангке &quot;&quot; беріңіз. */
+#include &lt;mpi.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+static const char *input;
+
+static void require(int ok) {
+    if (!ok) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+        fprintf(stderr, &quot;%d-ранг. Кіріс деректері немесе процесс саны жарамсыз\n&quot;, rank);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static double real(void) {
+    char *end;
+    errno = 0;
+    double value = strtod(input, &amp;end);
+    require(end != input &amp;&amp; errno == 0);
+    input = end;
+    return value;
+}
+
+static void vd(int rank, const double *a, int n) {
+    size_t size = 32 * ((size_t)n + 1);
+    char *line = malloc(size);
+    require(line != NULL);
+    size_t used = (size_t)snprintf(line, size, &quot;%d:&quot;, rank);
+    for (int i = 0; i &lt; n; i++)
+        used += (size_t)snprintf(line + used, size - used, &quot; %.12g&quot;, a[i]);
+    puts(line);
+    free(line);
+}
+
+int main(int argc, char **argv) {
+    int r, k;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;r);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;k);
+    require(argc == k + 1);
+    input = argv[r + 1];
+
+    require(k &gt;= 4 &amp;&amp; k % 2 == 0);
+    int dims[] = {k / 2, 2}, periods[] = {0, 0}, keep[] = {1, 0};
+    MPI_Comm grid, column;
+    MPI_Cart_create(MPI_COMM_WORLD, 2, dims, periods, 0, &amp;grid);
+    MPI_Cart_sub(grid, keep, &amp;column);
+    double a;
+    if (r &lt; 2) a = real();
+    MPI_Bcast(&amp;a, 1, MPI_DOUBLE, 0, column);
+    vd(r, &amp;a, 1);
+    MPI_Comm_free(&amp;column);
+    MPI_Comm_free(&amp;grid);
+
+    require(input[strspn(input, &quot; \t\r\n&quot;)] == '\0');
+    MPI_Finalize();
+    return 0;
+}
+</code></pre>
+        <h3>Linux жүйесінде MPI арқылы іске қосу</h3><pre tabindex="0"><code>mpicc -std=c99 MPIBegin86.c -o MPIBegin86
+mpiexec -n 6 ./MPIBegin86 &quot;1.5&quot; &quot;2.5&quot; &quot;&quot; &quot;&quot; &quot;&quot; &quot;&quot;</code></pre>
+        <p><a class="task-link" href="module-5.html#task-86">Тапсырмаға оралу</a></p></div></details>
+<details class="task" id="code-89"><summary><span class="task-id">MPIBegin89</span><span class="task-name">Әр жолда сандарды жинау</span></summary><div class="task-body">
+        <div class="code-head"><h3>C тіліндегі код</h3><div class="actions"><button type="button" data-copy="89">Көшіру</button><button type="button" data-download="89">.c файлын жүктеу</button></div></div>
+        <pre class="source" tabindex="0"><code id="source-89">/* Әр MPI рангіне тырнақшаға алынған бір аргумент беріңіз. Кіріс деректері жоқ рангке &quot;&quot; беріңіз. */
+#include &lt;mpi.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+static const char *input;
+
+static void require(int ok) {
+    if (!ok) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+        fprintf(stderr, &quot;%d-ранг. Кіріс деректері немесе процесс саны жарамсыз\n&quot;, rank);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static int integer(void) {
+    char *end;
+    errno = 0;
+    long value = strtol(input, &amp;end, 10);
+    require(end != input &amp;&amp; errno == 0 &amp;&amp; value &gt;= INT_MIN &amp;&amp; value &lt;= INT_MAX);
+    input = end;
+    return (int)value;
+}
+
+static void vi(int rank, const int *a, int n) {
+    size_t size = 32 * ((size_t)n + 1);
+    char *line = malloc(size);
+    require(line != NULL);
+    size_t used = (size_t)snprintf(line, size, &quot;%d:&quot;, rank);
+    for (int i = 0; i &lt; n; i++)
+        used += (size_t)snprintf(line + used, size - used, &quot; %d&quot;, a[i]);
+    puts(line);
+    free(line);
+}
+
+int main(int argc, char **argv) {
+    int r, k;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;r);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;k);
+    require(argc == k + 1);
+    input = argv[r + 1];
+
+    require(k == 8 || k == 12);
+    int width = k / 4;
+    int dims[] = {2, 2, width}, periods[] = {0, 0, 0}, keep[] = {0, 0, 1};
+    MPI_Comm grid, row;
+    MPI_Cart_create(MPI_COMM_WORLD, 3, dims, periods, 0, &amp;grid);
+    MPI_Cart_sub(grid, keep, &amp;row);
+    int a = integer(), out[width], local;
+    MPI_Comm_rank(row, &amp;local);
+    MPI_Gather(&amp;a, 1, MPI_INT, out, 1, MPI_INT, 0, row);
+    if (local == 0) vi(r, out, width);
+    MPI_Comm_free(&amp;row);
+    MPI_Comm_free(&amp;grid);
+
+    require(input[strspn(input, &quot; \t\r\n&quot;)] == '\0');
+    MPI_Finalize();
+    return 0;
+}
+</code></pre>
+        <h3>Linux жүйесінде MPI арқылы іске қосу</h3><pre tabindex="0"><code>mpicc -std=c99 MPIBegin89.c -o MPIBegin89
+mpiexec -n 8 ./MPIBegin89 &quot;10&quot; &quot;11&quot; &quot;12&quot; &quot;13&quot; &quot;14&quot; &quot;15&quot; &quot;16&quot; &quot;17&quot;</code></pre>
+        <p><a class="task-link" href="module-5.html#task-89">Тапсырмаға оралу</a></p></div></details>
+<details class="task" id="code-94"><summary><span class="task-id">MPIBegin94</span><span class="task-name">Периодты координаталар бойынша ранг табу</span></summary><div class="task-body">
+        <div class="code-head"><h3>C тіліндегі код</h3><div class="actions"><button type="button" data-copy="94">Көшіру</button><button type="button" data-download="94">.c файлын жүктеу</button></div></div>
+        <pre class="source" tabindex="0"><code id="source-94">/* Әр MPI рангіне тырнақшаға алынған бір аргумент беріңіз. Кіріс деректері жоқ рангке &quot;&quot; беріңіз. */
+#include &lt;mpi.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+static const char *input;
+
+static void require(int ok) {
+    if (!ok) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+        fprintf(stderr, &quot;%d-ранг. Кіріс деректері немесе процесс саны жарамсыз\n&quot;, rank);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static int integer(void) {
+    char *end;
+    errno = 0;
+    long value = strtol(input, &amp;end, 10);
+    require(end != input &amp;&amp; errno == 0 &amp;&amp; value &gt;= INT_MIN &amp;&amp; value &lt;= INT_MAX);
+    input = end;
+    return (int)value;
+}
+
+static void ri(int *a, int n) {
+    for (int i = 0; i &lt; n; i++) a[i] = integer();
+}
+
+static void vi(int rank, const int *a, int n) {
+    size_t size = 32 * ((size_t)n + 1);
+    char *line = malloc(size);
+    require(line != NULL);
+    size_t used = (size_t)snprintf(line, size, &quot;%d:&quot;, rank);
+    for (int i = 0; i &lt; n; i++)
+        used += (size_t)snprintf(line + used, size - used, &quot; %d&quot;, a[i]);
+    puts(line);
+    free(line);
+}
+
+int main(int argc, char **argv) {
+    int r, k;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;r);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;k);
+    require(argc == k + 1);
+    input = argv[r + 1];
+
+    int dims[2], periods[] = {0, 1};
+    if (r == 0) ri(dims, 2);
+    MPI_Bcast(dims, 2, MPI_INT, 0, MPI_COMM_WORLD);
+    require(dims[0] &gt; 0 &amp;&amp; dims[1] &gt; 0 &amp;&amp; dims[0] &lt;= k / dims[1]);
+    MPI_Comm grid;
+    MPI_Cart_create(MPI_COMM_WORLD, 2, dims, periods, 0, &amp;grid);
+    if (grid != MPI_COMM_NULL) {
+        int coords[2], out = -1;
+        ri(coords, 2);
+        if (coords[0] &gt;= 0 &amp;&amp; coords[0] &lt; dims[0])
+            MPI_Cart_rank(grid, coords, &amp;out);
+        vi(r, &amp;out, 1);
+        MPI_Comm_free(&amp;grid);
+    }
+
+    require(input[strspn(input, &quot; \t\r\n&quot;)] == '\0');
+    MPI_Finalize();
+    return 0;
+}
+</code></pre>
+        <h3>Linux жүйесінде MPI арқылы іске қосу</h3><pre tabindex="0"><code>mpicc -std=c99 MPIBegin94.c -o MPIBegin94
+mpiexec -n 5 ./MPIBegin94 &quot;2 2 0 -1&quot; &quot;1 4&quot; &quot;2 0&quot; &quot;1 -1&quot; &quot;&quot;</code></pre>
+        <p><a class="task-link" href="module-5.html#task-94">Тапсырмаға оралу</a></p></div></details>
+<details class="task" id="code-97"><summary><span class="task-id">MPIBegin97</span><span class="task-name">Матрицаларды циклдік ығыстыру</span></summary><div class="task-body">
+        <div class="code-head"><h3>C тіліндегі код</h3><div class="actions"><button type="button" data-copy="97">Көшіру</button><button type="button" data-download="97">.c файлын жүктеу</button></div></div>
+        <pre class="source" tabindex="0"><code id="source-97">/* Әр MPI рангіне тырнақшаға алынған бір аргумент беріңіз. Кіріс деректері жоқ рангке &quot;&quot; беріңіз. */
+#include &lt;mpi.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+static const char *input;
+
+static void require(int ok) {
+    if (!ok) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+        fprintf(stderr, &quot;%d-ранг. Кіріс деректері немесе процесс саны жарамсыз\n&quot;, rank);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static double real(void) {
+    char *end;
+    errno = 0;
+    double value = strtod(input, &amp;end);
+    require(end != input &amp;&amp; errno == 0);
+    input = end;
+    return value;
+}
+
+static void vd(int rank, const double *a, int n) {
+    size_t size = 32 * ((size_t)n + 1);
+    char *line = malloc(size);
+    require(line != NULL);
+    size_t used = (size_t)snprintf(line, size, &quot;%d:&quot;, rank);
+    for (int i = 0; i &lt; n; i++)
+        used += (size_t)snprintf(line + used, size - used, &quot; %.12g&quot;, a[i]);
+    puts(line);
+    free(line);
+}
+
+int main(int argc, char **argv) {
+    int r, k;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;r);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;k);
+    require(argc == k + 1);
+    input = argv[r + 1];
+
+    require(k == 8 || k == 12);
+    int dims[] = {2, 2, k / 4}, periods[] = {0, 0, 1};
+    MPI_Comm grid;
+    MPI_Cart_create(MPI_COMM_WORLD, 3, dims, periods, 0, &amp;grid);
+    int source, dest;
+    double a = real();
+    MPI_Cart_shift(grid, 2, 1, &amp;source, &amp;dest);
+    MPI_Sendrecv_replace(&amp;a, 1, MPI_DOUBLE, dest, 0, source, 0, grid, MPI_STATUS_IGNORE);
+    vd(r, &amp;a, 1);
+    MPI_Comm_free(&amp;grid);
+
+    require(input[strspn(input, &quot; \t\r\n&quot;)] == '\0');
+    MPI_Finalize();
+    return 0;
+}
+</code></pre>
+        <h3>Linux жүйесінде MPI арқылы іске қосу</h3><pre tabindex="0"><code>mpicc -std=c99 MPIBegin97.c -o MPIBegin97
+mpiexec -n 12 ./MPIBegin97 &quot;0.5&quot; &quot;1.5&quot; &quot;2.5&quot; &quot;3.5&quot; &quot;4.5&quot; &quot;5.5&quot; &quot;6.5&quot; &quot;7.5&quot; &quot;8.5&quot; &quot;9.5&quot; &quot;10.5&quot; &quot;11.5&quot;</code></pre>
+        <p><a class="task-link" href="module-5.html#task-97">Тапсырмаға оралу</a></p></div></details>
+<details class="task" id="code-100"><summary><span class="task-id">MPIBegin100</span><span class="task-name">Жұлдыз графында алмасу</span></summary><div class="task-body">
+        <div class="code-head"><h3>C тіліндегі код</h3><div class="actions"><button type="button" data-copy="100">Көшіру</button><button type="button" data-download="100">.c файлын жүктеу</button></div></div>
+        <pre class="source" tabindex="0"><code id="source-100">/* Әр MPI рангіне тырнақшаға алынған бір аргумент беріңіз. Кіріс деректері жоқ рангке &quot;&quot; беріңіз. */
+#include &lt;mpi.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;limits.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+static const char *input;
+
+static void require(int ok) {
+    if (!ok) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+        fprintf(stderr, &quot;%d-ранг. Кіріс деректері немесе процесс саны жарамсыз\n&quot;, rank);
+        MPI_Abort(MPI_COMM_WORLD, 1);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static int integer(void) {
+    char *end;
+    errno = 0;
+    long value = strtol(input, &amp;end, 10);
+    require(end != input &amp;&amp; errno == 0 &amp;&amp; value &gt;= INT_MIN &amp;&amp; value &lt;= INT_MAX);
+    input = end;
+    return (int)value;
+}
+
+static void vi(int rank, const int *a, int n) {
+    size_t size = 32 * ((size_t)n + 1);
+    char *line = malloc(size);
+    require(line != NULL);
+    size_t used = (size_t)snprintf(line, size, &quot;%d:&quot;, rank);
+    for (int i = 0; i &lt; n; i++)
+        used += (size_t)snprintf(line + used, size - used, &quot; %d&quot;, a[i]);
+    puts(line);
+    free(line);
+}
+
+int main(int argc, char **argv) {
+    int r, k;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;r);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;k);
+    require(argc == k + 1);
+    input = argv[r + 1];
+
+    int n = (k - 1) / 3;
+    require(k == 3 * n + 1 &amp;&amp; n &gt;= 2 &amp;&amp; n &lt;= 4);
+    int index[k], edges[8 * n], used = 0;
+    for (int i = 0; i &lt; k; i++) {
+        if (i == 0) {
+            for (int j = 3; j &lt; k; j += 3) edges[used++] = j;
+        } else {
+            int first = 1 + 3 * ((i - 1) / 3);
+            if (i % 3 == 0) edges[used++] = 0;
+            for (int j = first; j &lt; first + 3; j++)
+                if (j != i) edges[used++] = j;
+        }
+        index[i] = used;
+    }
+    MPI_Comm graph;
+    MPI_Graph_create(MPI_COMM_WORLD, k, index, edges, 0, &amp;graph);
+    int count, a = integer();
+    MPI_Graph_neighbors_count(graph, r, &amp;count);
+    int neighbors[count], out[count];
+    MPI_Graph_neighbors(graph, r, count, neighbors);
+    for (int i = 1; i &lt; count; i++) {
+        int j = i, peer = neighbors[i];
+        while (j &gt; 0 &amp;&amp; neighbors[j - 1] &gt; peer) {
+            neighbors[j] = neighbors[j - 1];
+            j--;
+        }
+        neighbors[j] = peer;
+    }
+    for (int i = 0; i &lt; count; i++) {
+        int peer = neighbors[i];
+        MPI_Sendrecv(&amp;a, 1, MPI_INT, peer, 0, out + i, 1, MPI_INT, peer, 0,
+                     graph, MPI_STATUS_IGNORE);
+    }
+    vi(r, out, count);
+    MPI_Comm_free(&amp;graph);
+
+    require(input[strspn(input, &quot; \t\r\n&quot;)] == '\0');
+    MPI_Finalize();
+    return 0;
+}
+</code></pre>
+        <h3>Linux жүйесінде MPI арқылы іске қосу</h3><pre tabindex="0"><code>mpicc -std=c99 MPIBegin100.c -o MPIBegin100
+mpiexec -n 7 ./MPIBegin100 &quot;10&quot; &quot;11&quot; &quot;12&quot; &quot;13&quot; &quot;14&quot; &quot;15&quot; &quot;16&quot;</code></pre>
+        <p><a class="task-link" href="module-5.html#task-100">Тапсырмаға оралу</a></p></div></details></section>
+</main>
+</div></div>
+<button class="chat-launch" type="button" data-chat-open aria-controls="chat-dialog"><span aria-hidden="true">?</span> Көмекші</button>
+<dialog id="chat-dialog" aria-labelledby="chat-title">
+  <div class="chat-header"><div><h2 id="chat-title">MPI көмекшісі</h2><p>Практикум бойынша сұрақтар</p></div><button type="button" id="chat-close" aria-label="Чатты жабу">×</button></div>
+  <div class="chat-log" id="chat-log" role="log" aria-live="polite"><p class="message bot">Сәлем! MPI туралы немесе тапсырманы қалай орындау керегі жайлы сұраңыз.</p></div>
+  <div class="chat-prompts" aria-label="Дайын сұрақтар"><button type="button">Код қайда?</button><button type="button">MPIBegin20 коды</button><button type="button">MPI қалай іске қосылады?</button></div>
+  <form class="chat-form" id="chat-form"><label class="sr-only" for="chat-input">Сұрағыңыз</label><input id="chat-input" maxlength="200" required placeholder="Сұрағыңызды жазыңыз"><button type="submit">Жіберу</button></form>
+</dialog>
+<div id="feedback" role="status"></div>
+<script src="app.js" defer></script>
+</body>
+</html>

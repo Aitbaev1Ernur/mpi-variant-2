@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="kk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="MPI практикумының 2-нұсқасы. MPIBegin жинағындағы 36 тапсырманың шешімі.">
+<title>2-модуль · Екі процесс арасында хабарлама жіберу</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#course">Негізгі мазмұнға өту</a>
+<div class="platform">
+<aside class="sidebar">
+  <a class="brand" href="index.html"><span class="brand-icon" aria-hidden="true">MPI</span><span>MPI практикумы<small>Оқу платформасы</small></span></a>
+  <nav class="course-nav" aria-label="Оқу модульдері">
+    <span class="nav-label">Оқу бағдарламасы</span>
+    <a href="module-1.html"><span>01</span> Параллель орындау</a>
+    <a href="module-2.html"><span>02</span> Хабарлама алмасу</a>
+    <a href="module-3.html"><span>03</span> Редукция және дерек түрлері</a>
+    <a href="module-4.html"><span>04</span> Ұжымдық операциялар</a>
+    <a href="module-5.html"><span>05</span> Виртуалды топологиялар</a>
+    <a class="nav-code" href="code.html"><span aria-hidden="true">&lt;/&gt;</span> Бастапқы код</a>
+  </nav>
+  <button class="sidebar-help" type="button" data-chat-open><span aria-hidden="true">?</span> MPI көмекшісі</button>
+</aside>
+<div class="workspace">
+<header class="topbar"><div class="wrap topbar-inner">
+  <a href="#course" class="top-title">Параллель бағдарламалау <span>/</span> Практикум</a>
+  <div class="search-box">
+    <label class="sr-only" for="task-search">Тапсырма іздеу</label>
+    <input id="task-search" type="search" placeholder="Тапсырма іздеу" autocomplete="off" aria-controls="search-results" aria-expanded="false">
+    <div id="search-results" class="search-results" hidden></div>
+  </div>
+</div></header>
+<main class="wrap" id="course">
+<div class="page-heading"><a href="index.html">← Барлық модульдер</a></div><section class="module" id="module-2" aria-labelledby="title-2">
+  <div class="module-head"><span class="module-no">2-модуль</span><h2 id="title-2">Екі процесс арасында хабарлама жіберу</h2><span class="count">8 тапсырма</span></div>
+  <div class="theory" aria-labelledby="theory-2"><h3 id="theory-2">Теория</h3><p>Екі процесс арасында хабарлама жіберу үшін <code>MPI_Send</code> және <code>MPI_Recv</code> қолданылады. Жіберуші деректің түрін, санын, алушы рангін және тегін көрсетеді. Қабылдаушы сол коммуникатордағы үйлесімді хабарламаны дерек түрі, жіберуші және тег бойынша қабылдайды. Қабылдау буфері хабарламаға жеткілікті болуы керек.</p><p><code>MPI_ANY_SOURCE</code> кез келген жіберушіден, <code>MPI_ANY_TAG</code> кез келген тегпен қабылдауға мүмкіндік береді. <code>MPI_Probe</code> хабарламаны алмай тұрып оның мәртебесін анықтайды, ал <code>MPI_Get_count</code> сол мәртебе бойынша элементтер санын береді. <code>MPI_Sendrecv_replace</code> жіберу мен қабылдауды бір шақыруда орындап, бастапқы буферді қабылданған мәндермен толтырады.</p><p><strong>Мысал.</strong> MPIBegin20 тапсырмасында хабарламаның тегі оның қай бағытта жіберілгенін көрсетеді. Блоктаушы жіберулер өзара күтіп қалмас үшін жіберушілер ранг ретімен жұмыс істейді.</p></div>
+  <details class="task" id="task-9"><summary><span class="task-id">MPIBegin9</span><span class="task-name">Әр бағыныңқы процестен төрт сан алу</span></summary>
+      <div class="task-body">
+        <h3>Тапсырма шарты</h3><p>Әр бағыныңқы процесте төрт бүтін сан берілген. Төрт санды бір MPI_Send шақыруымен 0-рангке жіберіңіз. Нәтижені жіберушілер рангінің өсу ретімен шығарыңыз.</p>
+        <h3>Шешімі</h3><p>0-ранг әр жіберушіден төрт сан қабылдайды.</p>
+        <form class="runner" data-task="9">
+          <label for="input-9">Рангтер бойынша кіріс деректері</label>
+          <textarea id="input-9" rows="3" spellcheck="false">—
+1 2 3 4
+5 6 7 8</textarea>
+          <div class="actions"><button type="submit">Іске қосу</button><button type="reset">Мысалды қалпына келтіру</button></div>
+          <label for="result-9">Нәтиже</label>
+          <output id="result-9" for="input-9" aria-live="polite">0: 1 2 3 4 5 6 7 8</output>
+        </form>
+        <a class="task-link" href="code.html#code-9">Бастапқы кодты көру</a>
+      </div></details>
+<details class="task" id="task-13"><summary><span class="task-id">MPIBegin13</span><span class="task-name">Бір-бір саннан тарату және қалдықты беру</span></summary>
+      <div class="task-body">
+        <h3>Тапсырма шарты</h3><p>0-рангте N саны және N саннан тұратын тізім бар, мұнда K − 1 ≤ N &lt; 10, ал K — процестер саны. MPI_Send арқылы 1-ден K − 2-ге дейінгі рангтерге бір-бір саннан, соңғы рангке қалған сандарды жіберіңіз. Әр қабылдаушы өз сандарын шығарады. Соңғы ранг қабылданған сандар санын MPI_Get_count арқылы анықтайды.</p>
+        <h3>Шешімі</h3><p>Алғашқы K − 2 сан жеке жіберіледі, тізімнің қалған бөлігі соңғы рангке бір хабарламамен беріледі.</p>
+        <form class="runner" data-task="13">
+          <label for="input-13">Рангтер бойынша кіріс деректері</label>
+          <textarea id="input-13" rows="4" spellcheck="false">6 1 2 3 4 5 6
+—
+—
+—</textarea>
+          <div class="actions"><button type="submit">Іске қосу</button><button type="reset">Мысалды қалпына келтіру</button></div>
+          <label for="result-13">Нәтиже</label>
+          <output id="result-13" for="input-13" aria-live="polite">1: 1
+2: 2
+3: 3 4 5 6</output>
+        </form>
+        <a class="task-link" href="code.html#code-13">Бастапқы кодты көру</a>
+      </div></details>
+<details class="task" id="task-15"><summary><span class="task-id">MPIBegin15</span><span class="task-name">Белгісіз жіберушіден қабылдау</span></summary>
+      <div class="task-body">
+        <h3>Тапсырма шарты</h3><p>Әр бағыныңқы процесте N берілген. Тек бір процесте N &gt; 0 және N сан бар, қалған процестерде N = 0. Сол тізімді 0-рангке жіберіңіз. Қабылдауда MPI_ANY_SOURCE қолданып, сандарды және жіберуші рангін шығарыңыз.</p>
+        <h3>Шешімі</h3><p>0-ранг MPI_Probe арқылы хабарламаны тауып, оның ұзындығын және жіберушісін анықтайды.</p>
+        <form class="runner" data-task="15">
+          <label for="input-15">Рангтер бойынша кіріс деректері</label>
+          <textarea id="input-15" rows="4" spellcheck="false">—
+0
+3 1.5 2 8
+0</textarea>
+          <div class="actions"><button type="submit">Іске қосу</button><button type="reset">Мысалды қалпына келтіру</button></div>
+          <label for="result-15">Нәтиже</label>
+          <output id="result-15" for="input-15" aria-live="polite">0: 1.5 2 8 2</output>
+        </form>
+        <a class="task-link" href="code.html#code-15">Бастапқы кодты көру</a>
+      </div></details>
+<details class="task" id="task-20"><summary><span class="task-id">MPIBegin20</span><span class="task-name">Сақинадағы екі көршімен алмасу</span></summary>
+      <div class="task-body">
+        <h3>Тапсырма шарты</h3><p>Әр процесте екі бүтін сан бар. MPI_Send және MPI_Recv арқылы бірінші санды алдыңғы, екіншісін келесі рангке жіберіңіз. 0 мен K − 1 бір-біріне көрші. Әр процесс әуелі алдыңғы, одан кейін келесі көршісінен келген санды шығарады.</p>
+        <h3>Шешімі</h3><p>Екі бағыттағы хабарламаны тегтері арқылы ажыратамыз.</p>
+        <form class="runner" data-task="20">
+          <label for="input-20">Рангтер бойынша кіріс деректері</label>
+          <textarea id="input-20" rows="4" spellcheck="false">10 11
+20 21
+30 31
+40 41</textarea>
+          <div class="actions"><button type="submit">Іске қосу</button><button type="reset">Мысалды қалпына келтіру</button></div>
+          <label for="result-20">Нәтиже</label>
+          <output id="result-20" for="input-20" aria-live="polite">0: 41 20
+1: 11 30
+2: 21 40
+3: 31 10</output>
+        </form>
+        <a class="task-link" href="code.html#code-20">Бастапқы кодты көру</a>
+      </div></details>
+<details class="task" id="task-21"><summary><span class="task-id">MPIBegin21</span><span class="task-name">Рангтерді алмастыру арқылы жіберу</span></summary>
+      <div class="task-body">
+        <h3>Тапсырма шарты</h3><p>Әр процесте нақты A және бүтін N берілген. N мәндері 0-ден K − 1-ге дейін бір реттен кездеседі. A санын MPI_Send арқылы N рангке жіберіп, MPI_Recv және MPI_ANY_SOURCE арқылы қабылдаңыз. Алынған сан мен жіберуші рангін шығарыңыз.</p>
+        <h3>Шешімі</h3><p>Әр сан N рангке барады. Қабылдаушы жіберуші рангін хабарлама мәртебесінен алады.</p>
+        <form class="runner" data-task="21">
+          <label for="input-21">Рангтер бойынша кіріс деректері</label>
+          <textarea id="input-21" rows="4" spellcheck="false">1.5 2
+2.5 0
+3.5 1
+4.5 3</textarea>
+          <div class="actions"><button type="submit">Іске қосу</button><button type="reset">Мысалды қалпына келтіру</button></div>
+          <label for="result-21">Нәтиже</label>
+          <output id="result-21" for="input-21" aria-live="polite">0: 2.5 1
+1: 3.5 2
+2: 1.5 0
+3: 4.5 3</output>
+        </form>
+        <a class="task-link" href="code.html#code-21">Бастапқы кодты көру</a>
+      </div></details>
+<details class="task" id="task-25"><summary><span class="task-id">MPIBegin25</span><span class="task-name">Сандарды кері ретпен орналастыру</span></summary>
+      <div class="task-body">
+        <h3>Тапсырма шарты</h3><p>Әр процесте бір нақты сан бар. MPI_Sendrecv_replace арқылы 0 мен K − 1, 1 мен K − 2 және сол сияқты жұптар өз сандарымен алмасады. Әр процесс алған санын шығарады.</p>
+        <h3>Шешімі</h3><p>r рангі K − 1 − r рангімен алмасады.</p>
+        <form class="runner" data-task="25">
+          <label for="input-25">Рангтер бойынша кіріс деректері</label>
+          <textarea id="input-25" rows="3" spellcheck="false">1.5
+2.5
+3.5</textarea>
+          <div class="actions"><button type="submit">Іске қосу</button><button type="reset">Мысалды қалпына келтіру</button></div>
+          <label for="result-25">Нәтиже</label>
+          <output id="result-25" for="input-25" aria-live="polite">0: 3.5
+1: 2.5
+2: 1.5</output>
+        </form>
+        <a class="task-link" href="code.html#code-25">Бастапқы кодты көру</a>
+      </div></details>
+<details class="task" id="task-26"><summary><span class="task-id">MPIBegin26</span><span class="task-name">Тегтегі реттік нөмір</span></summary>
+      <div class="task-body">
+        <h3>Тапсырма шарты</h3><p>Әр бағыныңқы процесте нақты A және бүтін N берілген. N мәндері 1-ден K − 1-ге дейін бір реттен кездеседі. A санын 0-рангке MPI_Send арқылы жіберіп, тегке N мәнін жазыңыз. 0-рангте сандарды N өсу ретімен шығарыңыз.</p>
+        <h3>Шешімі</h3><p>0-ранг хабарламаларды 1-ден K − 1-ге дейінгі тегтер бойынша қабылдайды.</p>
+        <form class="runner" data-task="26">
+          <label for="input-26">Рангтер бойынша кіріс деректері</label>
+          <textarea id="input-26" rows="4" spellcheck="false">—
+9.5 3
+4.5 1
+7.5 2</textarea>
+          <div class="actions"><button type="submit">Іске қосу</button><button type="reset">Мысалды қалпына келтіру</button></div>
+          <label for="result-26">Нәтиже</label>
+          <output id="result-26" for="input-26" aria-live="polite">0: 4.5 7.5 9.5</output>
+        </form>
+        <a class="task-link" href="code.html#code-26">Бастапқы кодты көру</a>
+      </div></details>
+<details class="task" id="task-28"><summary><span class="task-id">MPIBegin28</span><span class="task-name">Тегтегі сан түрі</span></summary>
+      <div class="task-body">
+        <h3>Тапсырма шарты</h3><p>0-рангте әр бағыныңқы процеске бір (T, A) жұбынан берілген. T = 0 болса A бүтін, T = 1 болса A нақты сан. Жұптар ретімен әр бағыныңқыға бір A жіберіңіз. MPI_Send тегіне T жазыңыз. Қабылдаушы MPI_Probe және MPI_ANY_TAG арқылы түрін анықтап, санды шығарады.</p>
+        <h3>Шешімі</h3><p>0 тегі MPI_INT түріне, 1 тегі MPI_DOUBLE түріне сәйкес келеді.</p>
+        <form class="runner" data-task="28">
+          <label for="input-28">Рангтер бойынша кіріс деректері</label>
+          <textarea id="input-28" rows="4" spellcheck="false">0 7 1 2.5 0 -3
+—
+—
+—</textarea>
+          <div class="actions"><button type="submit">Іске қосу</button><button type="reset">Мысалды қалпына келтіру</button></div>
+          <label for="result-28">Нәтиже</label>
+          <output id="result-28" for="input-28" aria-live="polite">1: 7
+2: 2.5
+3: -3</output>
+        </form>
+        <a class="task-link" href="code.html#code-28">Бастапқы кодты көру</a>
+      </div></details>
+</section><nav class="module-pager" aria-label="Модульдер арасында өту"><a href="module-1.html">← Алдыңғы модуль</a><a href="module-3.html">Келесі модуль →</a></nav>
+</main>
+</div></div>
+<button class="chat-launch" type="button" data-chat-open aria-controls="chat-dialog"><span aria-hidden="true">?</span> Көмекші</button>
+<dialog id="chat-dialog" aria-labelledby="chat-title">
+  <div class="chat-header"><div><h2 id="chat-title">MPI көмекшісі</h2><p>Практикум бойынша сұрақтар</p></div><button type="button" id="chat-close" aria-label="Чатты жабу">×</button></div>
+  <div class="chat-log" id="chat-log" role="log" aria-live="polite"><p class="message bot">Сәлем! MPI туралы немесе тапсырманы қалай орындау керегі жайлы сұраңыз.</p></div>
+  <div class="chat-prompts" aria-label="Дайын сұрақтар"><button type="button">MPI_Send деген не?</button><button type="button">MPI_Probe не істейді?</button><button type="button">MPIBegin20</button></div>
+  <form class="chat-form" id="chat-form"><label class="sr-only" for="chat-input">Сұрағыңыз</label><input id="chat-input" maxlength="200" required placeholder="Сұрағыңызды жазыңыз"><button type="submit">Жіберу</button></form>
+</dialog>
+<div id="feedback" role="status"></div>
+<script src="app.js" defer></script>
+</body>
+</html>

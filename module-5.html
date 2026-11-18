@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="kk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="MPI практикумының 2-нұсқасы. MPIBegin жинағындағы 36 тапсырманың шешімі.">
+<title>5-модуль · Виртуалды топологияларды пайдалану</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#course">Негізгі мазмұнға өту</a>
+<div class="platform">
+<aside class="sidebar">
+  <a class="brand" href="index.html"><span class="brand-icon" aria-hidden="true">MPI</span><span>MPI практикумы<small>Оқу платформасы</small></span></a>
+  <nav class="course-nav" aria-label="Оқу модульдері">
+    <span class="nav-label">Оқу бағдарламасы</span>
+    <a href="module-1.html"><span>01</span> Параллель орындау</a>
+    <a href="module-2.html"><span>02</span> Хабарлама алмасу</a>
+    <a href="module-3.html"><span>03</span> Редукция және дерек түрлері</a>
+    <a href="module-4.html"><span>04</span> Ұжымдық операциялар</a>
+    <a href="module-5.html"><span>05</span> Виртуалды топологиялар</a>
+    <a class="nav-code" href="code.html"><span aria-hidden="true">&lt;/&gt;</span> Бастапқы код</a>
+  </nav>
+  <button class="sidebar-help" type="button" data-chat-open><span aria-hidden="true">?</span> MPI көмекшісі</button>
+</aside>
+<div class="workspace">
+<header class="topbar"><div class="wrap topbar-inner">
+  <a href="#course" class="top-title">Параллель бағдарламалау <span>/</span> Практикум</a>
+  <div class="search-box">
+    <label class="sr-only" for="task-search">Тапсырма іздеу</label>
+    <input id="task-search" type="search" placeholder="Тапсырма іздеу" autocomplete="off" aria-controls="search-results" aria-expanded="false">
+    <div id="search-results" class="search-results" hidden></div>
+  </div>
+</div></header>
+<main class="wrap" id="course">
+<div class="page-heading"><a href="index.html">← Барлық модульдер</a></div><section class="module" id="module-5" aria-labelledby="title-5">
+  <div class="module-head"><span class="module-no">5-модуль</span><h2 id="title-5">Виртуалды топологияларды пайдалану</h2><span class="count">6 тапсырма</span></div>
+  <div class="theory" aria-labelledby="theory-5"><h3 id="theory-5">Теория</h3><p>Виртуалды топология процестерді тор немесе граф түрінде ұйымдастырады. <code>MPI_Cart_create</code> декарттық торды құрады. <code>MPI_Cart_coords</code> ранг бойынша координатаны, <code>MPI_Cart_rank</code> координата бойынша рангті анықтайды. Өлшем периодты болса, тордың соңғы ұяшығынан кейін қайтадан бірінші ұяшық келеді.</p><p><code>MPI_Cart_sub</code> тордың кейбір өлшемдерін сақтап, одан жол немесе баған сияқты кіші тор құрады. <code>MPI_Cart_shift</code> ығысу бағытына сәйкес жіберуші мен алушы рангтерін табады. Торға ұқсамайтын байланыстарды <code>MPI_Graph_create</code> арқылы сипаттауға болады. <code>MPI_Graph_neighbors</code> көрсетілген процестің көршілерін береді.</p><p><strong>Мысал.</strong> 2 × 3 торында рангтер өзгертілмесе, 4-рангтің координатасы (1, 1) болады. Баған өлшемі периодты болса, (1, −1) координатасы (1, 2) ұяшығына, яғни 5-рангке сәйкес келеді.</p></div>
+  <details class="task" id="task-83"><summary><span class="task-id">MPIBegin83</span><span class="task-name">Екі өлшемді тордағы координаталар</span></summary>
+      <div class="task-body">
+        <h3>Тапсырма шарты</h3><p>0-рангте N &gt; 1 берілген, K саны N-ге қалдықсыз бөлінеді. N-ді барлық процеске таратыңыз. MPI_Cart_create арқылы рангтерді өзгертпей N × K/N торын құрыңыз. Әр процесс MPI_Cart_coords көмегімен өз координаталарын шығарады.</p>
+        <h3>Шешімі</h3><p>MPI_Bcast параметрді таратады, одан кейін әр ранг тордағы жолы мен бағанын табады.</p>
+        <form class="runner" data-task="83">
+          <label for="input-83">Рангтер бойынша кіріс деректері</label>
+          <textarea id="input-83" rows="4" spellcheck="false">2
+—
+—
+—</textarea>
+          <div class="actions"><button type="submit">Іске қосу</button><button type="reset">Мысалды қалпына келтіру</button></div>
+          <label for="result-83">Нәтиже</label>
+          <output id="result-83" for="input-83" aria-live="polite">0: 0 0
+1: 0 1
+2: 1 0
+3: 1 1</output>
+        </form>
+        <a class="task-link" href="code.html#code-83">Бастапқы кодты көру</a>
+      </div></details>
+<details class="task" id="task-86"><summary><span class="task-id">MPIBegin86</span><span class="task-name">Бағандар бойынша тарату</span></summary>
+      <div class="task-body">
+        <h3>Тапсырма шарты</h3><p>K = 2N, N &gt; 1. 0 және 1 рангтерінде бір-бір нақты A саны бар. N × 2 тор құрып, MPI_Cart_sub арқылы оны екі бағанға бөліңіз. Әр бағанның бірінші процесі бір ұжымдық операциямен өз A мәнін бүкіл бағанға таратады. Барлық процесс алған санын шығарады.</p>
+        <h3>Шешімі</h3><p>Бірінші өлшемді сақтап, әр баған ішінде MPI_Bcast орындаймыз.</p>
+        <form class="runner" data-task="86">
+          <label for="input-86">Рангтер бойынша кіріс деректері</label>
+          <textarea id="input-86" rows="6" spellcheck="false">1.5
+2.5
+—
+—
+—
+—</textarea>
+          <div class="actions"><button type="submit">Іске қосу</button><button type="reset">Мысалды қалпына келтіру</button></div>
+          <label for="result-86">Нәтиже</label>
+          <output id="result-86" for="input-86" aria-live="polite">0: 1.5
+1: 2.5
+2: 1.5
+3: 2.5
+4: 1.5
+5: 2.5</output>
+        </form>
+        <a class="task-link" href="code.html#code-86">Бастапқы кодты көру</a>
+      </div></details>
+<details class="task" id="task-89"><summary><span class="task-id">MPIBegin89</span><span class="task-name">Әр жолда сандарды жинау</span></summary>
+      <div class="task-body">
+        <h3>Тапсырма шарты</h3><p>K = 8 немесе K = 12. Әр процесте бір бүтін сан бар. Рангтерді өзгертпей 2 × 2 × K/4 торын құрыңыз. Екі матрицаның әрқайсысын екі жолға бөліңіз. Әр жолда бір ұжымдық операциямен сандарды бірінші процеске жинап, сол жерде шығарыңыз.</p>
+        <h3>Шешімі</h3><p>MPI_Cart_sub үшінші өлшемді сақтайды. Әр жолдың жергілікті 0-рангі сандарды MPI_Gather арқылы жинайды.</p>
+        <form class="runner" data-task="89">
+          <label for="input-89">Рангтер бойынша кіріс деректері</label>
+          <textarea id="input-89" rows="8" spellcheck="false">10
+11
+12
+13
+14
+15
+16
+17</textarea>
+          <div class="actions"><button type="submit">Іске қосу</button><button type="reset">Мысалды қалпына келтіру</button></div>
+          <label for="result-89">Нәтиже</label>
+          <output id="result-89" for="input-89" aria-live="polite">0: 10 11
+2: 12 13
+4: 14 15
+6: 16 17</output>
+        </form>
+        <a class="task-link" href="code.html#code-89">Бастапқы кодты көру</a>
+      </div></details>
+<details class="task" id="task-94"><summary><span class="task-id">MPIBegin94</span><span class="task-name">Периодты координаталар бойынша ранг табу</span></summary>
+      <div class="task-body">
+        <h3>Тапсырма шарты</h3><p>0-рангте оң M және N берілген, M × N ≤ K. Алғашқы M × N процесте бүтін X және Y бар. M мен N-ді таратып, алғашқы M × N процесс үшін екінші өлшемі периодты M × N торын құрыңыз. Рангтерді өзгертпеңіз. Әр қатысушы MPI_Cart_rank арқылы (X, Y) координаталарының рангін, ал жарамсыз координата үшін −1 шығарады.</p>
+        <h3>Шешімі</h3><p>Y координатасы период бойынша оралады. X тор шегінен шықса, нәтиже −1 болады.</p>
+        <form class="runner" data-task="94">
+          <label for="input-94">Рангтер бойынша кіріс деректері</label>
+          <textarea id="input-94" rows="5" spellcheck="false">2 2 0 -1
+1 4
+2 0
+1 -1
+—</textarea>
+          <div class="actions"><button type="submit">Іске қосу</button><button type="reset">Мысалды қалпына келтіру</button></div>
+          <label for="result-94">Нәтиже</label>
+          <output id="result-94" for="input-94" aria-live="polite">0: 1
+1: 2
+2: -1
+3: 3</output>
+        </form>
+        <a class="task-link" href="code.html#code-94">Бастапқы кодты көру</a>
+      </div></details>
+<details class="task" id="task-97"><summary><span class="task-id">MPIBegin97</span><span class="task-name">Матрицаларды циклдік ығыстыру</span></summary>
+      <div class="task-body">
+        <h3>Тапсырма шарты</h3><p>K = 8 немесе K = 12. Әр процесте нақты сан бар. Рангтерді өзгертпей 2 × 2 × K/4 торын құрыңыз. Үшінші координата бойынша матрицаларды реттеңіз. Әр матрицаның мәндерін келесі матрицаның сәйкес процестеріне, ал соңғысын бірінші матрицаға жіберіңіз. MPI_Cart_shift және MPI_Sendrecv_replace қолданып, әр рангте алынған санды шығарыңыз.</p>
+        <h3>Шешімі</h3><p>Үшінші өлшемді периодты етіп, сол өлшем бойымен +1 қадамға ығыстырамыз.</p>
+        <form class="runner" data-task="97">
+          <label for="input-97">Рангтер бойынша кіріс деректері</label>
+          <textarea id="input-97" rows="8" spellcheck="false">0.5
+1.5
+2.5
+3.5
+4.5
+5.5
+6.5
+7.5
+8.5
+9.5
+10.5
+11.5</textarea>
+          <div class="actions"><button type="submit">Іске қосу</button><button type="reset">Мысалды қалпына келтіру</button></div>
+          <label for="result-97">Нәтиже</label>
+          <output id="result-97" for="input-97" aria-live="polite">0: 2.5
+1: 0.5
+2: 1.5
+3: 5.5
+4: 3.5
+5: 4.5
+6: 8.5
+7: 6.5
+8: 7.5
+9: 11.5
+10: 9.5
+11: 10.5</output>
+        </form>
+        <a class="task-link" href="code.html#code-97">Бастапқы кодты көру</a>
+      </div></details>
+<details class="task" id="task-100"><summary><span class="task-id">MPIBegin100</span><span class="task-name">Жұлдыз графында алмасу</span></summary>
+      <div class="task-body">
+        <h3>Тапсырма шарты</h3><p>K = 3N + 1, мұнда 1 &lt; N &lt; 5. Әр процесте бүтін A саны бар. MPI_Graph_create арқылы (1, 2, 3), (4, 5, 6) және кейінгі үштіктердің ішінде барлық жұпты қырмен қосыңыз. 3, 6, … рангтерін 0-рангпен байланыстырыңыз. MPI_Graph_neighbors_count және MPI_Graph_neighbors арқылы көршілерді тауып, MPI_Sendrecv арқылы A санымен алмасыңыз. Әр процесс алған сандарын жіберушілер рангінің өсу ретімен шығарады.</p>
+        <h3>Шешімі</h3><p>Әр сәуле үшбұрыш құрайды. Көршілердің рангтерін сұрыптап, әр көршімен бір сан алмасамыз.</p>
+        <form class="runner" data-task="100">
+          <label for="input-100">Рангтер бойынша кіріс деректері</label>
+          <textarea id="input-100" rows="7" spellcheck="false">10
+11
+12
+13
+14
+15
+16</textarea>
+          <div class="actions"><button type="submit">Іске қосу</button><button type="reset">Мысалды қалпына келтіру</button></div>
+          <label for="result-100">Нәтиже</label>
+          <output id="result-100" for="input-100" aria-live="polite">0: 13 16
+1: 12 13
+2: 11 13
+3: 10 11 12
+4: 15 16
+5: 14 16
+6: 10 14 15</output>
+        </form>
+        <a class="task-link" href="code.html#code-100">Бастапқы кодты көру</a>
+      </div></details>
+</section><nav class="module-pager" aria-label="Модульдер арасында өту"><a href="module-4.html">← Алдыңғы модуль</a><a href="code.html">Бастапқы код →</a></nav>
+</main>
+</div></div>
+<button class="chat-launch" type="button" data-chat-open aria-controls="chat-dialog"><span aria-hidden="true">?</span> Көмекші</button>
+<dialog id="chat-dialog" aria-labelledby="chat-title">
+  <div class="chat-header"><div><h2 id="chat-title">MPI көмекшісі</h2><p>Практикум бойынша сұрақтар</p></div><button type="button" id="chat-close" aria-label="Чатты жабу">×</button></div>
+  <div class="chat-log" id="chat-log" role="log" aria-live="polite"><p class="message bot">Сәлем! MPI туралы немесе тапсырманы қалай орындау керегі жайлы сұраңыз.</p></div>
+  <div class="chat-prompts" aria-label="Дайын сұрақтар"><button type="button">MPI_Cart_create деген не?</button><button type="button">Периодты тор деген не?</button><button type="button">MPIBegin94</button></div>
+  <form class="chat-form" id="chat-form"><label class="sr-only" for="chat-input">Сұрағыңыз</label><input id="chat-input" maxlength="200" required placeholder="Сұрағыңызды жазыңыз"><button type="submit">Жіберу</button></form>
+</dialog>
+<div id="feedback" role="status"></div>
+<script src="app.js" defer></script>
+</body>
+</html>

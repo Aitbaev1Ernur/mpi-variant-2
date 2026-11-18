@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="kk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="MPI практикумының 2-нұсқасы. MPIBegin жинағындағы 36 тапсырманың шешімі.">
+<title>3-модуль · Редукция операциялары және құрама дерек түрлері</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#course">Негізгі мазмұнға өту</a>
+<div class="platform">
+<aside class="sidebar">
+  <a class="brand" href="index.html"><span class="brand-icon" aria-hidden="true">MPI</span><span>MPI практикумы<small>Оқу платформасы</small></span></a>
+  <nav class="course-nav" aria-label="Оқу модульдері">
+    <span class="nav-label">Оқу бағдарламасы</span>
+    <a href="module-1.html"><span>01</span> Параллель орындау</a>
+    <a href="module-2.html"><span>02</span> Хабарлама алмасу</a>
+    <a href="module-3.html"><span>03</span> Редукция және дерек түрлері</a>
+    <a href="module-4.html"><span>04</span> Ұжымдық операциялар</a>
+    <a href="module-5.html"><span>05</span> Виртуалды топологиялар</a>
+    <a class="nav-code" href="code.html"><span aria-hidden="true">&lt;/&gt;</span> Бастапқы код</a>
+  </nav>
+  <button class="sidebar-help" type="button" data-chat-open><span aria-hidden="true">?</span> MPI көмекшісі</button>
+</aside>
+<div class="workspace">
+<header class="topbar"><div class="wrap topbar-inner">
+  <a href="#course" class="top-title">Параллель бағдарламалау <span>/</span> Практикум</a>
+  <div class="search-box">
+    <label class="sr-only" for="task-search">Тапсырма іздеу</label>
+    <input id="task-search" type="search" placeholder="Тапсырма іздеу" autocomplete="off" aria-controls="search-results" aria-expanded="false">
+    <div id="search-results" class="search-results" hidden></div>
+  </div>
+</div></header>
+<main class="wrap" id="course">
+<div class="page-heading"><a href="index.html">← Барлық модульдер</a></div><section class="module" id="module-3" aria-labelledby="title-3">
+  <div class="module-head"><span class="module-no">3-модуль</span><h2 id="title-3">Редукция операциялары және құрама дерек түрлері</h2><span class="count">9 тапсырма</span></div>
+  <div class="theory" aria-labelledby="theory-3"><h3 id="theory-3">Теория</h3><p>Редукция бірнеше процестің дерегін бір операциямен біріктіреді. Ұзындықтары бірдей тізімдерде операция әр позицияға жеке қолданылады. <code>MPI_Reduce</code> нәтижені бір процеске, <code>MPI_Allreduce</code> барлық қатысушыға береді. <code>MPI_Reduce_scatter</code> нәтижені бөліп таратады, ал <code>MPI_Scan</code> әр ранг үшін 0-ден сол рангке дейінгі деректерді біріктіреді.</p><p>Туынды MPI дерек түрі бірнеше өрісті бір жазба ретінде жіберуге мүмкіндік береді. Мысалы, бір жазбада екі бүтін және бір нақты сан болуы мүмкін. Дерек түрін қолданар алдында <code>MPI_Type_commit</code> арқылы бекітеміз. <code>MPI_Pack</code> бірнеше мәнді бір буферге жинайды, ал <code>MPI_Unpack</code> оларды жазылған ретпен шығарады.</p><p><strong>Мысал.</strong> Екі процесте [2, 7] және [4, 3] тізімдері берілсе, <code>MPI_MIN</code> нәтижесі [2, 3], ал <code>MPI_PROD</code> нәтижесі [8, 21] болады.</p></div>
+  <details class="task" id="task-49"><summary><span class="task-id">MPIBegin49</span><span class="task-name">Бағандар бойынша минимум</span></summary>
+      <div class="task-body">
+        <h3>Тапсырма шарты</h3><p>Әр процесте K + 5 сан берілген. MPI_Reduce және MPI_MIN арқылы бірдей позициядағы сандардың минимумын тауып, нәтижені 0-рангте шығарыңыз.</p>
+        <h3>Шешімі</h3><p>Әр позицияны жеке салыстырып, минимумдарды 0-рангке жинаймыз.</p>
+        <form class="runner" data-task="49">
+          <label for="input-49">Рангтер бойынша кіріс деректері</label>
+          <textarea id="input-49" rows="3" spellcheck="false">4 9 2 8 3 7 0 1
+3 8 5 1 4 6 2 2
+6 7 1 9 0 8 3 3</textarea>
+          <div class="actions"><button type="submit">Іске қосу</button><button type="reset">Мысалды қалпына келтіру</button></div>
+          <label for="result-49">Нәтиже</label>
+          <output id="result-49" for="input-49" aria-live="polite">0: 3 7 1 1 0 6 0 1</output>
+        </form>
+        <a class="task-link" href="code.html#code-49">Бастапқы кодты көру</a>
+      </div></details>
+<details class="task" id="task-51"><summary><span class="task-id">MPIBegin51</span><span class="task-name">Бағандар бойынша көбейтінді</span></summary>
+      <div class="task-body">
+        <h3>Тапсырма шарты</h3><p>Әр процесте K + 5 сан берілген. MPI_Allreduce және MPI_PROD арқылы бірдей позициядағы сандарды көбейтіңіз. Көбейтінділерді барлық процесте шығарыңыз.</p>
+        <h3>Шешімі</h3><p>Әр ранг бірдей көбейтінділер тізімін алады.</p>
+        <form class="runner" data-task="51">
+          <label for="input-51">Рангтер бойынша кіріс деректері</label>
+          <textarea id="input-51" rows="3" spellcheck="false">2 1 0 3 4 -1 2
+3 2 5 2 1 2 -3</textarea>
+          <div class="actions"><button type="submit">Іске қосу</button><button type="reset">Мысалды қалпына келтіру</button></div>
+          <label for="result-51">Нәтиже</label>
+          <output id="result-51" for="input-51" aria-live="polite">0: 6 2 0 6 4 -2 -6
+1: 6 2 0 6 4 -2 -6</output>
+        </form>
+        <a class="task-link" href="code.html#code-51">Бастапқы кодты көру</a>
+      </div></details>
+<details class="task" id="task-54"><summary><span class="task-id">MPIBegin54</span><span class="task-name">Максимумдарды есептеу және тарату</span></summary>
+      <div class="task-body">
+        <h3>Тапсырма шарты</h3><p>Әр процесте 2K сан бар. MPI_Reduce_scatter арқылы бірдей позициядағы сандардың максимумын табыңыз. Алғашқы екеуін 0-рангке, келесі екеуін 1-рангке және солай жалғастырып таратыңыз. Әр процесс алған екі санын шығарады.</p>
+        <h3>Шешімі</h3><p>Әр рангке есептелген максимумдардың өзіне тиесілі жұбы беріледі.</p>
+        <form class="runner" data-task="54">
+          <label for="input-54">Рангтер бойынша кіріс деректері</label>
+          <textarea id="input-54" rows="3" spellcheck="false">1 9 3 4 5 6
+7 2 8 3 4 8
+2 3 4 9 5 0</textarea>
+          <div class="actions"><button type="submit">Іске қосу</button><button type="reset">Мысалды қалпына келтіру</button></div>
+          <label for="result-54">Нәтиже</label>
+          <output id="result-54" for="input-54" aria-live="polite">0: 7 9
+1: 8 9
+2: 5 8</output>
+        </form>
+        <a class="task-link" href="code.html#code-54">Бастапқы кодты көру</a>
+      </div></details>
+<details class="task" id="task-57"><summary><span class="task-id">MPIBegin57</span><span class="task-name">Рангке дейінгі максимумдар</span></summary>
+      <div class="task-body">
+        <h3>Тапсырма шарты</h3><p>Әр процесте K + 5 бүтін сан бар. MPI_Scan арқылы r рангі үшін 0-ден r-ге дейінгі процестердің бірдей позициядағы сандарының максимумын табыңыз. Әр процесс өз нәтижесін шығарады.</p>
+        <h3>Шешімі</h3><p>MPI_MAX операциясы әр позициядағы максимумды ағымдағы рангке дейін есептейді.</p>
+        <form class="runner" data-task="57">
+          <label for="input-57">Рангтер бойынша кіріс деректері</label>
+          <textarea id="input-57" rows="3" spellcheck="false">1 9 3 4 5 6 7 8
+7 2 8 3 4 8 1 0
+2 3 4 9 5 0 9 10</textarea>
+          <div class="actions"><button type="submit">Іске қосу</button><button type="reset">Мысалды қалпына келтіру</button></div>
+          <label for="result-57">Нәтиже</label>
+          <output id="result-57" for="input-57" aria-live="polite">0: 1 9 3 4 5 6 7 8
+1: 7 9 8 4 5 8 7 8
+2: 7 9 8 9 5 8 9 10</output>
+        </form>
+        <a class="task-link" href="code.html#code-57">Бастапқы кодты көру</a>
+      </div></details>
+<details class="task" id="task-58"><summary><span class="task-id">MPIBegin58</span><span class="task-name">Бүтін үштіктерді тарату</span></summary>
+      <div class="task-body">
+        <h3>Тапсырма шарты</h3><p>0-рангте K − 1 бүтін үштік бар. Үш бүтінді қамтитын туынды түрді және бір ұжымдық операцияны қолданып, барлық үштікті бағыныңқы процестерге таратыңыз. Әрқайсысы сандарды бастапқы ретпен шығарады.</p>
+        <h3>Шешімі</h3><p>MPI_Type_contiguous үштіктің түрін сипаттайды, MPI_Bcast оны таратады.</p>
+        <form class="runner" data-task="58">
+          <label for="input-58">Рангтер бойынша кіріс деректері</label>
+          <textarea id="input-58" rows="3" spellcheck="false">1 2 3 4 5 6
+—
+—</textarea>
+          <div class="actions"><button type="submit">Іске қосу</button><button type="reset">Мысалды қалпына келтіру</button></div>
+          <label for="result-58">Нәтиже</label>
+          <output id="result-58" for="input-58" aria-live="polite">1: 1 2 3 4 5 6
+2: 1 2 3 4 5 6</output>
+        </form>
+        <a class="task-link" href="code.html#code-58">Бастапқы кодты көру</a>
+      </div></details>
+<details class="task" id="task-63"><summary><span class="task-id">MPIBegin63</span><span class="task-name">Нақты сан мен екі бүтін санды жіберу</span></summary>
+      <div class="task-body">
+        <h3>Тапсырма шарты</h3><p>Әр бағыныңқы процесте бір нақты және екі бүтін сан бар. Осы үш санды қамтитын туынды түрді қолданып, оларды 0-рангке жіберіңіз. Сандарды жіберушілер рангінің өсу ретімен шығарыңыз.</p>
+        <h3>Шешімі</h3><p>Туынды түр құрылымның өрістерін сипаттайды. 0-ранг әр жіберушіден бір жазба алады.</p>
+        <form class="runner" data-task="63">
+          <label for="input-63">Рангтер бойынша кіріс деректері</label>
+          <textarea id="input-63" rows="3" spellcheck="false">—
+1.5 2 3
+4.5 5 6</textarea>
+          <div class="actions"><button type="submit">Іске қосу</button><button type="reset">Мысалды қалпына келтіру</button></div>
+          <label for="result-63">Нәтиже</label>
+          <output id="result-63" for="input-63" aria-live="polite">0: 1.5 2 3 4.5 5 6</output>
+        </form>
+        <a class="task-link" href="code.html#code-63">Бастапқы кодты көру</a>
+      </div></details>
+<details class="task" id="task-65"><summary><span class="task-id">MPIBegin65</span><span class="task-name">Үштіктер жиынын жіберу</span></summary>
+      <div class="task-body">
+        <h3>Тапсырма шарты</h3><p>Әр бағыныңқы r процесінде r үштік берілген. Әр үштікте алдымен екі бүтін, одан кейін бір нақты сан тұрады. Туынды түр арқылы үштіктерді 0-рангке жіберіп, жіберушілер рангінің өсу ретімен шығарыңыз.</p>
+        <h3>Шешімі</h3><p>MPI_Type_create_resized массив элементтерінің қадамын құрылым өлшеміне теңестіреді.</p>
+        <form class="runner" data-task="65">
+          <label for="input-65">Рангтер бойынша кіріс деректері</label>
+          <textarea id="input-65" rows="3" spellcheck="false">—
+1 2 3.5
+4 5 6.5 7 8 9.5</textarea>
+          <div class="actions"><button type="submit">Іске қосу</button><button type="reset">Мысалды қалпына келтіру</button></div>
+          <label for="result-65">Нәтиже</label>
+          <output id="result-65" for="input-65" aria-live="polite">0: 1 2 3.5 4 5 6.5 7 8 9.5</output>
+        </form>
+        <a class="task-link" href="code.html#code-65">Бастапқы кодты көру</a>
+      </div></details>
+<details class="task" id="task-66"><summary><span class="task-id">MPIBegin66</span><span class="task-name">Екі тізімді буып-түю және тарату</span></summary>
+      <div class="task-body">
+        <h3>Тапсырма шарты</h3><p>0-рангте K бүтін және K нақты саннан тұратын екі тізім бар. MPI_Pack, MPI_Unpack және бір ұжымдық операция арқылы барлық деректі бағыныңқы процестерге беріңіз. Әрқайсысы сандарды бастапқы ретімен шығарады.</p>
+        <h3>Шешімі</h3><p>0-ранг алдымен бүтін, кейін нақты сандарды буып, бір MPI_Bcast арқылы таратады.</p>
+        <form class="runner" data-task="66">
+          <label for="input-66">Рангтер бойынша кіріс деректері</label>
+          <textarea id="input-66" rows="3" spellcheck="false">1 2 3 0.5 1.5 2.5
+—
+—</textarea>
+          <div class="actions"><button type="submit">Іске қосу</button><button type="reset">Мысалды қалпына келтіру</button></div>
+          <label for="result-66">Нәтиже</label>
+          <output id="result-66" for="input-66" aria-live="polite">1: 1 2 3 0.5 1.5 2.5
+2: 1 2 3 0.5 1.5 2.5</output>
+        </form>
+        <a class="task-link" href="code.html#code-66">Бастапқы кодты көру</a>
+      </div></details>
+<details class="task" id="task-70"><summary><span class="task-id">MPIBegin70</span><span class="task-name">Әр рангтен бір пакет қабылдау</span></summary>
+      <div class="task-body">
+        <h3>Тапсырма шарты</h3><p>Әр бағыныңқы r процесінде бір нақты және r бүтін сан берілген. Деректерді буып, әр жіберуші үшін бір жіберу және бір қабылдау операциясымен 0-рангке жеткізіңіз. Нәтижені жіберушілер рангінің өсу ретімен шығарыңыз.</p>
+        <h3>Шешімі</h3><p>Әр пакетке әуелі нақты сан, содан кейін бүтін сандар жазылады.</p>
+        <form class="runner" data-task="70">
+          <label for="input-70">Рангтер бойынша кіріс деректері</label>
+          <textarea id="input-70" rows="3" spellcheck="false">—
+1.5 7
+2.5 8 9</textarea>
+          <div class="actions"><button type="submit">Іске қосу</button><button type="reset">Мысалды қалпына келтіру</button></div>
+          <label for="result-70">Нәтиже</label>
+          <output id="result-70" for="input-70" aria-live="polite">0: 1.5 7 2.5 8 9</output>
+        </form>
+        <a class="task-link" href="code.html#code-70">Бастапқы кодты көру</a>
+      </div></details>
+</section><nav class="module-pager" aria-label="Модульдер арасында өту"><a href="module-2.html">← Алдыңғы модуль</a><a href="module-4.html">Келесі модуль →</a></nav>
+</main>
+</div></div>
+<button class="chat-launch" type="button" data-chat-open aria-controls="chat-dialog"><span aria-hidden="true">?</span> Көмекші</button>
+<dialog id="chat-dialog" aria-labelledby="chat-title">
+  <div class="chat-header"><div><h2 id="chat-title">MPI көмекшісі</h2><p>Практикум бойынша сұрақтар</p></div><button type="button" id="chat-close" aria-label="Чатты жабу">×</button></div>
+  <div class="chat-log" id="chat-log" role="log" aria-live="polite"><p class="message bot">Сәлем! MPI туралы немесе тапсырманы қалай орындау керегі жайлы сұраңыз.</p></div>
+  <div class="chat-prompts" aria-label="Дайын сұрақтар"><button type="button">MPI_Reduce деген не?</button><button type="button">MPI_Pack қалай жұмыс істейді?</button><button type="button">MPIBegin49</button></div>
+  <form class="chat-form" id="chat-form"><label class="sr-only" for="chat-input">Сұрағыңыз</label><input id="chat-input" maxlength="200" required placeholder="Сұрағыңызды жазыңыз"><button type="submit">Жіберу</button></form>
+</dialog>
+<div id="feedback" role="status"></div>
+<script src="app.js" defer></script>
+</body>
+</html>
